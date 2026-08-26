@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-structural.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=3">
 <script type="importmap">
 {
   "imports": {
@@ -31,6 +31,7 @@
     "@mms/design-system/components/mms-checkbox-group": "../../node_modules/@mms/design-system/dist/components/checkbox-group/mms-checkbox-group.component.js",
     "@mms/design-system/components/mms-select": "../../node_modules/@mms/design-system/dist/components/select/mms-select.component.js",
     "@mms/design-system/components/mms-icon": "../../node_modules/@mms/design-system/dist/components/icon/mms-icon.component.js",
+    "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
     "/Ohio-Veterans/node_modules/@mms/design-system/dist/icons/icon-svgs.json": "./icon-svgs-shim.js"
   }
 }
@@ -42,6 +43,7 @@
   import '@mms/design-system/components/mms-checkbox-group';
   import '@mms/design-system/components/mms-select';
   import '@mms/design-system/components/mms-icon';
+  import '@mms/design-system/components/mms-text-field';
 </script>
 </head>
 <body>
@@ -106,7 +108,7 @@
 
       <div class="chat-input-row">
         <label class="visually-hidden" for="chat-text-input">Type your answer</label>
-        <input type="text" id="chat-text-input" class="text-input" placeholder="Type your answer, or tap an option above" autocomplete="off">
+        <mms-text-field id="chat-text-input" placeholder="Type your answer, or tap an option above" size="lg"></mms-text-field>
         <mms-button id="chat-send-button" label="Send" icon-only left-icon="paper-plane-right" variant="primary" color-scheme="primary" size="lg"></mms-button>
       </div>
     </div>

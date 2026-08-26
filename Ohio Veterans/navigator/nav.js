@@ -2,11 +2,13 @@
 // Header account-menu disclosure, shared across all three pages. Renders
 // Profile/Light Mode/Dark Mode/Sign out (logged in) or Login/Create an
 // Account/Light Mode/Dark Mode (logged out) from auth.js's mocked,
-// instant-toggle session state and theme.js's persisted mode.
+// instant-toggle session state and theme.js's persisted mode, plus a "Try a
+// scenario" section that seeds a guided-persona goal and jumps into intake.
 
 import { isLoggedIn, logIn, logOut } from './auth.js';
 import { isDarkMode, setDarkMode } from './theme.js';
-import { getUserGroup, setUserGroup } from './user-group.js';
+import { resetState, setIntent, setScenario, setLandingText } from './state.js';
+import { SCENARIOS } from './scenarios.js';
 
 const trigger = document.getElementById('nav-account-button');
 const menu = document.getElementById('account-menu');
@@ -62,17 +64,14 @@ if (trigger && menu) {
     menu.appendChild(label);
   }
 
-  function addUserGroupRow(label, icon, group) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'account-menu__item';
-    if (getUserGroup() === group) button.classList.add('account-menu__item--active');
-    button.innerHTML = `<mms-icon name="${icon}" size="sm"></mms-icon><span>${label}</span>`;
-    button.addEventListener('click', () => {
-      setUserGroup(group);
-      renderMenuItems();
+  function addScenarioRow(scenario) {
+    addAction(scenario.label, scenario.icon, () => {
+      resetState();
+      setIntent(scenario.goal);
+      setScenario(scenario.value);
+      if (scenario.promptText) setLandingText(scenario.promptText);
+      window.location.href = 'index.html';
     });
-    menu.appendChild(button);
   }
 
   function renderMenuItems() {
@@ -92,10 +91,8 @@ if (trigger && menu) {
       addThemeRow('Dark Mode', 'moon', true);
     }
     addDivider();
-    addLabel('Testing: view as');
-    addUserGroupRow('Existing user', 'user-check', 'existing');
-    addUserGroupRow('New user', 'user-plus', 'new');
-    addUserGroupRow('Admin', 'user-gear', 'admin');
+    addLabel('Try a scenario');
+    SCENARIOS.forEach(addScenarioRow);
   }
 
   renderAvatar();

@@ -14,11 +14,7 @@ export function setDarkMode(enabled) {
 }
 
 export function applyTheme() {
-  if (isDarkMode()) {
-    document.documentElement.setAttribute('data-mode', 'dark');
-  } else {
-    document.documentElement.removeAttribute('data-mode');
-  }
+  document.documentElement.setAttribute('data-mode', isDarkMode() ? 'dark' : 'light');
 }
 
 applyTheme();

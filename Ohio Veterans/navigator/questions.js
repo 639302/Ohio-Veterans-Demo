@@ -51,6 +51,14 @@ export const CATEGORIES = [
     description: 'Resources for your family or caregiver.',
     icon: 'users',
   },
+  {
+    value: 'healthcare',
+    label: 'VA Health Care',
+    pillLabel: 'Healthcare',
+    tabLabel: 'Healthcare',
+    description: 'Get connected to VA health care.',
+    icon: 'stethoscope',
+  },
 ];
 
 // Trivial keyword pattern-matching against the free-text landing input.
@@ -63,6 +71,7 @@ export const CATEGORY_KEYWORDS = {
   'mental-health': ['mental', 'crisis', 'stress', 'depress', 'anxiety', 'counsel', 'suicide', 'ptsd'],
   housing: ['housing', 'home', 'rent', 'money', 'financial', 'evict', 'homeless', 'shelter'],
   family: ['family', 'spouse', 'caregiver', 'kids', 'children', 'dependent'],
+  healthcare: ['healthcare', 'health care', 'medical', 'clinic', 'enroll', 'va hospital'],
 };
 
 export function matchCategoryFromText(text) {
@@ -96,7 +105,6 @@ export const BRANCHES = [
   { value: 'space-force', label: 'Space Force', keywords: ['space force', 'guardian'] },
   { value: 'national-guard', label: 'National Guard', keywords: ['national guard'] },
   { value: 'reserve', label: 'Reserve', keywords: ['reserve', 'reservist'] },
-  { value: 'not-sure', label: 'Not sure', keywords: ['not sure', "don't know", 'unsure'] },
 ];
 
 export const STATUSES = [
@@ -226,6 +234,18 @@ export const QUESTIONS = [
     seedFromIntent: true,
     crisisValue: 'mental-health',
     crisisNotice: 'If you are in crisis, the Veterans Crisis Line is available 24/7: call 988, then press 1.',
+    conditional: (answers) => answers.scenario !== 'job-seeker',
+  },
+  {
+    id: 'job-focus',
+    type: 'multi',
+    prompt: 'What would you like help with? Choose all that apply.',
+    options: [
+      { value: 'find-jobs', label: 'Finding a job', keywords: ['find a job', 'find jobs', 'finding a job', 'jobs'] },
+      { value: 'resume-builder', label: 'Resume builder', keywords: ['resume', 'resume builder'] },
+      { value: 'interview-help', label: 'Interview help', keywords: ['interview'] },
+    ],
+    conditional: (answers) => answers.scenario === 'job-seeker',
   },
   {
     id: 'industries',
@@ -242,12 +262,14 @@ export const QUESTIONS = [
     type: 'single',
     prompt: 'How soon do you need help?',
     options: URGENCY_OPTIONS,
+    conditional: (answers) => answers.scenario !== 'job-seeker',
   },
   {
     id: 'contact',
     type: 'single',
     prompt: 'How should we follow up with you?',
     options: CONTACT_METHODS,
+    conditional: (answers) => answers.scenario !== 'job-seeker',
   },
   {
     id: 'contact-info',

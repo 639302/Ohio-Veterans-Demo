@@ -1,46 +1,106 @@
 // Ohio Veterans — Navigator
-// Landing screen behavior: free-text submit + category quick-start pills.
-// Pills are native buttons styled as .topic-pill (mms-button has no slot for
-// icon+label content), each containing an <mms-icon> for the glyph — still
-// defaulting to the DS component for the icon itself while the pill wrapper
-// stays custom.
+// Landing screen behavior: free-text submit and the static topic tab strip
+// (Benefits, GI Bill, Mental Health, Housing, Family — the 5 topics that
+// aren't personalized by intake answers). Category quick-start scenarios now
+// live in the account menu (nav.js/scenarios.js) instead of on this page.
 
-import { CATEGORIES, matchCategoryFromText } from './questions.js';
-import { resetState, setIntent } from './state.js';
+import { matchCategoryFromText } from './questions.js';
+import { getState, resetState, setIntent, setScenario, setLandingText } from './state.js';
+import { buildBenefitsCard, buildGiBillCard, buildMentalHealthCard, buildHousingCard, buildFamilyCard } from './static-content.js';
+import { RENDERERS } from './card-renderers.js?v=2';
 
-const grid = document.getElementById('category-grid');
+const tablistEl = document.getElementById('landing-tablist');
+const tabpanelsEl = document.getElementById('landing-tabpanels');
 
-CATEGORIES.forEach((category) => {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'topic-pill';
-  button.setAttribute('role', 'listitem');
-  button.setAttribute('aria-label', `${category.pillLabel}: ${category.description}`);
+const TOPIC_CARDS = [
+  buildMentalHealthCard(),
+  buildBenefitsCard(),
+  buildGiBillCard(),
+  buildHousingCard(),
+  buildFamilyCard(),
+];
 
-  const icon = document.createElement('mms-icon');
-  icon.setAttribute('name', category.icon);
-  icon.setAttribute('size', 'sm');
+function activateLandingTab(index) {
+  const tabButtons = Array.from(tablistEl.querySelectorAll('[role="tab"]'));
+  const panels = Array.from(tabpanelsEl.querySelectorAll('[role="tabpanel"]'));
+  tabButtons.forEach((tab, i) => {
+    const selected = i === index;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    if (selected) tab.focus();
+  });
+  panels.forEach((panel, i) => {
+    panel.hidden = i !== index;
+  });
+}
 
-  const label = document.createElement('span');
-  label.className = 'topic-pill__label';
-  label.textContent = category.pillLabel;
+function handleLandingTablistKeydown(event) {
+  const tabButtons = Array.from(tablistEl.querySelectorAll('[role="tab"]'));
+  const currentIndex = tabButtons.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
+  let nextIndex = null;
 
-  button.append(icon, label);
-  button.addEventListener('click', () => {
-    resetState();
-    setIntent(category.value);
-    window.location.href = 'intake.html';
+  if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabButtons.length;
+  else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
+  else if (event.key === 'Home') nextIndex = 0;
+  else if (event.key === 'End') nextIndex = tabButtons.length - 1;
+  else return;
+
+  event.preventDefault();
+  activateLandingTab(nextIndex);
+}
+
+function renderLandingTabs() {
+  tablistEl.innerHTML = '';
+  tabpanelsEl.innerHTML = '';
+
+  TOPIC_CARDS.forEach((card, index) => {
+    const selected = index === 0;
+
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'result-tab';
+    tab.id = `landing-tab-${card.key}`;
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', String(selected));
+    tab.setAttribute('aria-controls', `landing-tabpanel-${card.key}`);
+    tab.tabIndex = selected ? 0 : -1;
+    tab.textContent = card.title;
+    tab.addEventListener('click', () => activateLandingTab(index));
+    tablistEl.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'result-tabpanel';
+    panel.id = `landing-tabpanel-${card.key}`;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', `landing-tab-${card.key}`);
+    panel.hidden = !selected;
+    const renderer = RENDERERS[card.key];
+    if (renderer) panel.appendChild(renderer(card));
+    tabpanelsEl.appendChild(panel);
   });
 
-  grid.appendChild(button);
-});
+  tablistEl.addEventListener('keydown', handleLandingTablistKeydown);
+}
+
+renderLandingTabs();
 
 const textInput = document.getElementById('landing-text-input');
 const submitButton = document.getElementById('landing-submit');
 
+const { landingText } = getState();
+if (landingText) {
+  textInput.addEventListener('focus', () => {
+    textInput.value = landingText;
+  }, { once: true });
+}
+
 function submitFreeText() {
-  const guess = matchCategoryFromText(textInput.value || '');
+  const text = textInput.value || '';
+  const guess = matchCategoryFromText(text);
+  const scenario = getState().answers.scenario;
   resetState();
+  if (scenario) setScenario(scenario);
+  setLandingText(text);
   setIntent(guess);
   window.location.href = 'intake.html';
 }

@@ -13,6 +13,7 @@ function defaultState() {
     intent: null, // best-guess category from landing (keyword match or card tap)
     answers: {}, // { [questionId]: string | string[] }
     currentIndex: 0, // index into getVisibleQuestions()
+    landingText: null, // raw text shown/typed on the landing screen, reused for the Job Seeker intro message
   };
 }
 
@@ -31,8 +32,15 @@ export function saveState(state) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+// Also sweeps any embedded chat widget's saved conversation (see
+// flow-chat.js's `navigator-flow-<id>-v1` sessionStorage keys) so a full
+// intake restart doesn't leave a stale conversation behind. Coupled to
+// flow-chat.js only by this key-prefix naming convention, not an import.
 export function resetState() {
   sessionStorage.removeItem(STORAGE_KEY);
+  Object.keys(sessionStorage)
+    .filter((key) => key.startsWith('navigator-flow-'))
+    .forEach((key) => sessionStorage.removeItem(key));
 }
 
 export function setIntent(intent) {
@@ -48,6 +56,20 @@ export function setIntent(intent) {
 export function setAnswer(questionId, value) {
   const state = getState();
   state.answers[questionId] = value;
+  saveState(state);
+}
+
+// Tags the session with a guided-persona scenario (e.g. 'job-seeker') so
+// questions.js's conditionals can branch the question set per persona.
+export function setScenario(scenario) {
+  const state = getState();
+  state.answers.scenario = scenario;
+  saveState(state);
+}
+
+export function setLandingText(text) {
+  const state = getState();
+  state.landingText = text;
   saveState(state);
 }
 

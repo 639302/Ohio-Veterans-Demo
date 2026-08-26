@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-structural.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=5">
 <script type="importmap">
 {
   "imports": {
@@ -26,18 +26,23 @@
     "@lit-labs/ssr-dom-shim": "../../node_modules/@lit-labs/ssr-dom-shim/index.js",
     "@lit-labs/ssr-dom-shim/": "../../node_modules/@lit-labs/ssr-dom-shim/",
     "@mms/design-system/components/mms-button": "../../node_modules/@mms/design-system/dist/components/button/mms-button.component.js",
+    "@mms/design-system/components/mms-card": "../../node_modules/@mms/design-system/dist/components/card/mms-card.component.js",
     "@mms/design-system/components/mms-checkbox": "../../node_modules/@mms/design-system/dist/components/checkbox/mms-checkbox.component.js",
     "@mms/design-system/components/mms-checkbox-group": "../../node_modules/@mms/design-system/dist/components/checkbox-group/mms-checkbox-group.component.js",
     "@mms/design-system/components/mms-icon": "../../node_modules/@mms/design-system/dist/components/icon/mms-icon.component.js",
     "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
     "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
     "/Ohio-Veterans/node_modules/@mms/design-system/dist/icons/icon-svgs.json": "./icon-svgs-shim.js"
   }
 }
 </script>
 <script type="module">
   import '@mms/design-system/components/mms-button';
+  import '@mms/design-system/components/mms-card';
   import '@mms/design-system/components/mms-icon';
+  import '@mms/design-system/components/mms-link';
+  import '@mms/design-system/components/mms-text-field';
 </script>
 </head>
 <body>
@@ -88,19 +93,17 @@
     <div class="landing-content">
       <div class="landing-hero">
         <h1>Find the right benefits, services, and support in Ohio.</h1>
-        <p>Helping veterans, service members, families, caregivers, students, and job seekers. Share the topic you are interested in learning about today. A few easy questions will help us create your personalized pathway to services across Ohio.</p>
+        <p>Helping veterans, service members, families, and caregivers. Share the topic you are interested in learning about today. A few easy questions will help us create your personalized pathway to services across Ohio.</p>
       </div>
 
       <div class="landing-form" id="landing-form">
         <label class="visually-hidden" for="landing-text-input">Tell us what you need</label>
         <div class="landing-form__row">
-          <input
-            type="text"
+          <mms-text-field
             id="landing-text-input"
-            class="text-input"
-            placeholder="For example: 'I need help finding a job'"
-            autocomplete="off"
-          >
+            placeholder="What do you need help with today?"
+            size="lg"
+          ></mms-text-field>
           <mms-button
             id="landing-submit"
             label="Get Started"
@@ -110,16 +113,20 @@
           ></mms-button>
         </div>
       </div>
-
-      <p class="landing-divider">or choose a topic</p>
-
-      <div class="topic-pill-row" id="category-grid" role="list"></div>
     </div>
 
     <div class="landing-image" aria-hidden="true">
-      <img src="assets/AdobeStock_617951689.jpeg" alt="" class="landing-image__img">
+      <img src="assets/homepage.jpg" alt="" class="landing-image__img">
     </div>
   </div>
+
+  <section class="landing-topics" aria-label="Explore common topics">
+    <h2>Explore common topics</h2>
+    <div class="result-tabs-wrapper" id="landing-tabs-wrapper">
+      <div class="result-tabs" id="landing-tablist" role="tablist" aria-label="Explore common topics"></div>
+      <div id="landing-tabpanels"></div>
+    </div>
+  </section>
 </main>
 
 <script type="module" src="nav.js"></script>

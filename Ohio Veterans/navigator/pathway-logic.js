@@ -34,9 +34,9 @@ function buildMosTranslation(branch) {
   return MOS_TRANSLATION_BY_BRANCH[branch] || MOS_TRANSLATION_BY_BRANCH['not-sure'];
 }
 
-function buildCvsoCard(answers) {
+function buildCvsoCard(answers, { includeReferenceNumber = false } = {}) {
   const info = getCvsoInfo(answers.county);
-  return {
+  const card = {
     key: 'cvso',
     title: 'County Veterans Service Office Match',
     icon: 'map-pin',
@@ -46,190 +46,99 @@ function buildCvsoCard(answers) {
     email: info.email,
     website: info.website,
   };
+  if (includeReferenceNumber) {
+    card.referenceNumber = buildReferenceNumber(answers);
+  }
+  return card;
 }
 
-function buildMentalHealthCard(answers) {
-  const wantsMentalHealth = (answers.goals || []).includes('mental-health');
-  if (!wantsMentalHealth) return null;
-  return {
-    key: 'mental-health',
-    title: 'Mental Health',
-    icon: 'heart',
-    variant: 'crisis',
-    headline: 'You are not alone — help is available right now.',
-    body: {
-      before: 'The Veterans Crisis Line is free, confidential, and available 24/7. Call 988 then press 1, text 838255 or start a ',
-      linkLabel: 'live chat',
-      linkHref: 'https://www.veteranscrisisline.net/get-help-now/chat/',
-      after: ' today.',
-    },
-    communityCare: {
-      before: "If you'd like to see a counselor, but don't want to go to the VA, we can help you find a ",
-      linkLabel: 'community based behavioral counselor',
-      linkHref: 'https://starproviders.org/find-support/',
-      after: ' with training in military culture.',
-    },
-  };
-}
-
+// Employment is the only pathway content left on the Pathway Result screen,
+// so it's no longer gated on whether "Employment and Training" was picked at
+// Q5 — it always builds from branch/status/industry/county. Benefits, GI
+// Bill, Mental Health, Housing, and Family moved to static-content.js and
+// are shown unconditionally on the homepage instead.
 function buildEmploymentCard(answers) {
-  const wantsEmployment = (answers.goals || []).includes('employment');
-  if (!wantsEmployment) return null;
-  const mosTranslation = buildMosTranslation(answers.branch);
-
-  let skillbridge = null;
-  if (wantsEmployment && answers.status === 'currently-serving') {
-    const listings = getSkillbridgeListings({ industries: answers.industries });
-    if (listings.length) skillbridge = listings;
-  }
-
-  let jobListings = null;
-  if (wantsEmployment) {
-    const listings = getJobListings({ county: answers.county, industries: answers.industries, limit: 6 });
-    if (listings.length) jobListings = listings;
-  }
-  const jobSearchLink = wantsEmployment ? buildJobSearchLink() : null;
-
-  let employers = null;
-  if (wantsEmployment) {
-    const listings = getEmployerListings({ county: answers.county, industries: answers.industries, limit: 5 });
-    if (listings.length) employers = listings;
-  }
+  const mos = buildMosTranslationCard(answers);
+  const skillbridgeCard = buildSkillbridgeCard(answers);
+  const jobListingsCard = buildJobListingsCard(answers);
+  const employersCard = buildEmployersCard(answers);
 
   return {
     key: 'employment',
     title: 'Employment',
     icon: 'briefcase',
-    mosTranslation,
-    skillbridge,
-    jobListings,
-    jobSearchLink,
-    employers,
+    mosTranslation: mos.body,
+    skillbridge: skillbridgeCard ? skillbridgeCard.listings : null,
+    jobListings: jobListingsCard ? jobListingsCard.listings : null,
+    jobSearchLink: buildJobSearchLink(),
+    employers: employersCard ? employersCard.employers : null,
   };
 }
 
-function buildGiBillCard(answers) {
-  // Goal value "education" intentionally maps to card key "gi-bill" (pre-existing naming).
-  if (!(answers.goals || []).includes('education')) return null;
+// Same underlying data as buildEmploymentCard above, split into one card per
+// section — used by the job-seeker scenario's "Employment" tab (see
+// buildJobFocusTabs), where each section gets its own card instead of being
+// stacked inside one big Employment card.
+function buildMosTranslationCard(answers) {
   return {
-    key: 'gi-bill',
-    title: 'GI Bill Eligibility',
-    icon: 'graduation-cap',
-    body: [
-      "The Ohio GI Promise seeks to make Ohio the most veteran-friendly state in the country for higher education. To encourage veterans from across the country to bring their families, leadership, motivation, and maturity to Ohio's colleges and universities, the State of Ohio's executive order creating the Ohio GI Promise outlines criteria that lets qualified veterans and their dependents, from anywhere in the country, skip the standard 12-month residency requirement and attend Ohio's public colleges and universities at in-state tuition rates.",
-    ],
-    cta: {
-      before: 'Your County Veterans Service Office can help confirm whether you or your family qualify and walk you through applying. Learn more about the ',
-      linkLabel: 'Ohio GI Promise',
-      linkHref: 'https://highered.ohio.gov/initiatives/campus-initiatives/education-for-veterans/ohio-gi-promise',
-      after: ' and some frequently asked questions.',
-    },
+    key: 'mos-translation',
+    title: 'Military Occupational Specialty to Civilian Translation',
+    icon: 'translate',
+    body: buildMosTranslation(answers.branch),
   };
 }
 
-function buildHousingCard(answers) {
-  const triggered = (answers.goals || []).includes('housing');
-  if (!triggered) return null;
+function buildSkillbridgeCard(answers) {
+  if (answers.status !== 'currently-serving') return null;
+  const listings = getSkillbridgeListings({ industries: answers.industries });
+  if (!listings.length) return null;
+  return { key: 'skillbridge', title: 'SkillBridge Opportunities', icon: 'rocket-launch', listings };
+}
 
-  const showOvh = answers.status === 'veteran' || answers.status === 'family';
-
+function buildJobListingsCard(answers) {
+  const listings = getJobListings({ county: answers.county, industries: answers.industries, limit: 6 });
+  if (!listings.length) return null;
   return {
-    key: 'housing',
-    title: 'Housing Support',
-    icon: 'house',
-    base: {
-      body: 'If you are facing housing instability, help is available. The National Call Center for Homeless Veterans (877-424-3838) connects you with VA and community resources, including the Health Care for Homeless Veterans program.',
-      eligibilityCta: {
-        before: 'Determine your eligibility and apply for free to one of the ',
-        linkLabel: 'Ohio Veterans Homes',
-        linkHref: 'https://dvs.ohio.gov/veterans-homes/determining-eligibility',
-        after: '.',
-      },
-      links: [
-        { label: 'VA homeless resources', href: 'https://www.va.gov/homeless/' },
-        { label: 'National Coalition for Homeless Veterans', href: 'https://nchv.org/' },
-      ],
-    },
-    ovh: showOvh
-      ? {
-          body: 'If you or your veteran family member may need long-term nursing or assisted-living care, Ohio operates two state veterans homes that may be worth exploring.',
-          facilities: [
-            { name: 'Ohio Veterans Home – Sandusky', established: 1888, note: 'Long-term nursing, memory care, and domiciliary care.' },
-            { name: 'Ohio Veterans Home – Georgetown', established: 2003, note: 'Skilled nursing care.' },
-          ],
-          contact: '(888) 387-6446 · ohiovet@dvs.ohio.gov',
-          detailsHref: 'https://dvs.ohio.gov/',
-        }
-      : null,
-    homeLoanCard: {
-      key: 'housing-home-loans',
-      title: 'Home Loan Support',
-      icon: 'bank',
-      sections: [
-        {
-          subhead: 'Federal Home Loan Programs',
-          paragraphs: [
-            {
-              before: 'Eligible vets receive ',
-              linkLabel: 'guaranteed loans',
-              linkHref: 'https://www.benefits.va.gov/homeloans/',
-              after: ' to purchase, repair, or refinance a home.',
-            },
-            {
-              before: 'Housing for Wounded, Injured, and Ill and Surviving Spouses is available. ',
-              linkLabel: 'Learn more and apply today',
-              linkHref: 'https://www.usace.army.mil/Missions/Real-Estate/HAP/How-to-Apply/',
-              after: '',
-            },
-          ],
-        },
-        {
-          subhead: 'Ohio Home Loan Programs',
-          paragraphs: [
-            "The Ohio Housing Finance Agency offers all benefits of their first time home buyer program to Ohio's heroes at an interest rate approximately 1/4% lower than the going interest rate.",
-          ],
-          links: [
-            { label: 'Learn about eligibility', href: 'https://dam.assets.ohio.gov/image/upload/v1780516560/dvs.ohio.gov/benefits/ohio-heroes-fillable.pdf' },
-            { label: 'Learn more about the program', href: 'https://dam.assets.ohio.gov/image/upload/v1780584772/dvs.ohio.gov/benefits/homebuyerguide.pdf' },
-          ],
-        },
-      ],
-    },
+    key: 'job-listings',
+    title: 'Open Job Listings',
+    icon: 'list-checks',
+    listings,
+    jobSearchLink: buildJobSearchLink(),
   };
 }
 
-function buildBenefitsCard(answers) {
-  if (!(answers.goals || []).includes('benefits')) return null;
-  return {
-    key: 'benefits',
-    title: 'Benefits & Claims',
-    icon: 'file-text',
-    body: 'Your County Veterans Service Office can help you file, track, and appeal VA disability and other benefit claims at no cost — no paperwork fees, no middleman.',
-    links: [
-      { label: 'Confirm eligibility', href: 'https://www.va.gov/disability/eligibility/' },
-      { label: 'File for a disability claim online', href: 'https://www.va.gov/disability/file-disability-claim-form-21-526ez/introduction' },
-      { label: 'Check your claim status', href: 'https://www.va.gov/claim-or-appeal-status/' },
-      { label: 'Survivor benefits', href: 'https://www.va.gov/family-and-caregiver-benefits/survivor-compensation/dependency-indemnity-compensation/' },
-    ],
-  };
+function buildEmployersCard(answers) {
+  const employers = getEmployerListings({ county: answers.county, industries: answers.industries, limit: 5 });
+  if (!employers.length) return null;
+  return { key: 'employers', title: 'Military-Friendly Employers Near You', icon: 'buildings', employers };
 }
 
-function buildFamilyCard(answers) {
-  if (!(answers.goals || []).includes('family')) return null;
-  return {
-    key: 'family',
-    title: 'Caregiver Support',
-    icon: 'users',
-    body: 'Family members and caregivers can also get help through your County Veterans Service Office, including caregiver support resources and benefits information for dependents.',
-    links: [
-      { label: 'VA Caregiver Support Program', href: 'https://www.caregiver.va.gov/' },
-      { label: 'Central Ohio Caregiver Support', href: 'https://www.va.gov/central-ohio-health-care/health-services/caregiver-support/' },
-      { label: 'Chillicothe Caregiver Support', href: 'https://www.va.gov/chillicothe-health-care/health-services/caregiver-support/' },
-      { label: 'Cincinnati Caregiver Support', href: 'https://www.va.gov/cincinnati-health-care/health-services/caregiver-support/' },
-      { label: 'Dayton Caregiver Support', href: 'https://www.va.gov/dayton-health-care/health-services/caregiver-support/' },
-      { label: 'NorthEast Ohio Caregiver Support', href: 'https://www.va.gov/northeast-ohio-health-care/health-services/caregiver-support/' },
-    ],
-  };
+// Job-seeker scenario only: one tab per job-focus option selected at the
+// "job-focus" question, fixed in question-declaration order. "Finding a job"
+// maps to the existing Employment content, now split into one card per
+// section (see builders above). Resume Builder / Interview Help have no
+// content yet — they render an empty-cards placeholder until that content is
+// built out.
+const JOB_FOCUS_TABS = [
+  { value: 'find-jobs', key: 'employment', label: 'Employment' },
+  { value: 'resume-builder', key: 'resume-builder', label: 'Resume Builder' },
+  { value: 'interview-help', key: 'interview-help', label: 'Interview Help' },
+];
+
+function buildJobFocusTabs(answers) {
+  const selected = answers['job-focus'] || [];
+  return JOB_FOCUS_TABS.filter((tab) => selected.includes(tab.value)).map((tab) => {
+    if (tab.value === 'find-jobs') {
+      const cards = [
+        buildMosTranslationCard(answers),
+        buildSkillbridgeCard(answers),
+        buildJobListingsCard(answers),
+        buildEmployersCard(answers),
+      ].filter(Boolean);
+      return { key: tab.key, label: tab.label, cards };
+    }
+    return { key: tab.key, label: tab.label, cards: [] };
+  });
 }
 
 const URGENCY_COPY = {
@@ -271,44 +180,29 @@ function buildReferenceNumber(answers) {
   return `NAV-${String(hash + 100000).slice(0, 6)}`;
 }
 
-// Maps each Q5 goal value to the builder for its tab content.
-const GOAL_CARD_BUILDERS = {
-  benefits: buildBenefitsCard,
-  employment: buildEmploymentCard,
-  education: buildGiBillCard,
-  'mental-health': buildMentalHealthCard,
-  housing: buildHousingCard,
-  family: buildFamilyCard,
-};
-
-// Returns { persistent, tabs }:
-//   persistent - cards shown above the tab strip regardless of goal
-//                selection (County Veterans Service Office Match, Next Steps) — never duplicated per tab.
-//   tabs       - one card per selected Q5 goal, in selection order, plus:
-//                  - a situationally-triggered Housing card appended if not
-//                    already present from goal selection,
-//                  - Employment pulled to the front last, so it always wins.
-//                Selecting "Mental Health" as a goal always shows the
-//                crisis-variant card (988 line) — there is no separate
-//                situational crisis trigger.
+// Returns { persistent, employment, jobFocusTabs }:
+//   persistent    - cards always shown above the Employment section
+//                   (County Veterans Service Office Match, Next Steps). For
+//                   the job-seeker scenario, Next Steps is dropped and its
+//                   reference number is folded into the CVSO card instead.
+//   employment    - the flat, single Employment card (MOS translation,
+//                   SkillBridge, job listings, employers all stacked in one
+//                   card), built for every scenario except job-seeker, which
+//                   uses jobFocusTabs instead.
+//   jobFocusTabs  - job-seeker scenario only: one tab per job-focus option
+//                   selected, each with its own array of cards (see
+//                   buildJobFocusTabs above). Empty array for every other
+//                   scenario. Benefits, GI Bill, Mental Health, Housing, and
+//                   Family moved to static-content.js and are shown
+//                   unconditionally on the homepage instead.
 export function buildPathway(answers) {
-  const persistent = [buildCvsoCard(answers), buildNextStepsCard(answers)].filter(Boolean);
-
-  const goals = answers.goals || [];
-  const tabs = goals.map((goal) => GOAL_CARD_BUILDERS[goal]?.(answers)).filter(Boolean);
-
-  if (!tabs.some((card) => card.key === 'housing')) {
-    const housingCard = buildHousingCard(answers);
-    if (housingCard) tabs.push(housingCard);
-  }
-
-  const employmentIndex = tabs.findIndex((card) => card.key === 'employment');
-  if (employmentIndex > 0) {
-    const [employmentCard] = tabs.splice(employmentIndex, 1);
-    tabs.unshift(employmentCard);
-  }
-
-  return { persistent, tabs };
+  const isJobSeeker = answers.scenario === 'job-seeker';
+  const persistent = isJobSeeker
+    ? [buildCvsoCard(answers, { includeReferenceNumber: true })].filter(Boolean)
+    : [buildCvsoCard(answers), buildNextStepsCard(answers)].filter(Boolean);
+  const jobFocusTabs = isJobSeeker ? buildJobFocusTabs(answers) : [];
+  const employment = isJobSeeker ? null : buildEmploymentCard(answers);
+  return { persistent, employment, jobFocusTabs };
 }
 
 export function buildRecapBanner(answers) {

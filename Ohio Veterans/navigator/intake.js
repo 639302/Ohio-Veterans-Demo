@@ -32,6 +32,10 @@ let currentSelection = new Set();
 let currentAgentNode = null;
 let currentCrisisNode = null;
 
+// Job-seeker scenario only: gates the first real question behind a Yes/No
+// confirmation of the landing-page request, before any QUESTIONS entry runs.
+let awaitingIntroConfirmation = false;
+
 // One entry per already-answered question, so Back can rewind exactly one
 // turn: remove that turn's user/crisis messages, restore its agent message
 // as "current" again, and re-render its chips with the prior answer.
@@ -306,6 +310,47 @@ function beginTurn(question) {
   renderChipsFor(question, readExistingAnswer(question.id));
 }
 
+function renderYesNoChips() {
+  clearQuickReplies();
+
+  const yesButton = document.createElement('mms-button');
+  yesButton.setAttribute('label', 'Yes');
+  yesButton.setAttribute('variant', 'primary');
+  yesButton.setAttribute('color-scheme', 'primary');
+  yesButton.setAttribute('size', 'md');
+  yesButton.addEventListener('click', () => confirmIntroYes());
+
+  const noButton = document.createElement('mms-button');
+  noButton.setAttribute('label', 'No');
+  noButton.setAttribute('variant', 'secondary');
+  noButton.setAttribute('color-scheme', 'primary');
+  noButton.setAttribute('size', 'md');
+  noButton.addEventListener('click', () => confirmIntroNo());
+
+  quickReplies.append(yesButton, noButton);
+}
+
+function confirmIntroYes() {
+  awaitingIntroConfirmation = false;
+  appendUserMessage('Yes');
+  clearQuickReplies();
+  beginTurn(getCurrentQuestion());
+  updateProgress();
+}
+
+function confirmIntroNo() {
+  awaitingIntroConfirmation = false;
+  appendUserMessage('No');
+  window.location.href = 'index.html';
+}
+
+function beginIntroConfirmation(landingText) {
+  const text = landingText || 'get help';
+  appendAgentMessage(`I understand you want to ${text}. Let me ask you a few questions to create you a list of jobs tailored to you and your interests. Ready to get started?`);
+  awaitingIntroConfirmation = true;
+  renderYesNoChips();
+}
+
 function submitAnswer(question, value, displayText) {
   setAnswer(question.id, value);
   const userNode = appendUserMessage(displayText);
@@ -342,6 +387,21 @@ async function advance() {
 function handleTextSubmit() {
   const text = textInput.value.trim();
   if (!text) return;
+
+  if (awaitingIntroConfirmation) {
+    const normalized = text.toLowerCase();
+    textInput.value = '';
+    if (/^(y|yes|yeah|yep|sure|ok|okay)/.test(normalized)) {
+      confirmIntroYes();
+    } else if (/^(n|no|nope|nah)/.test(normalized)) {
+      confirmIntroNo();
+    } else {
+      appendUserMessage(text);
+      appendAgentMessage('I didn\'t quite catch that — you can tap Yes or No above, or type "yes"/"no".');
+    }
+    return;
+  }
+
   const question = getCurrentQuestion();
   if (!question) return;
 
@@ -411,9 +471,14 @@ textInput.addEventListener('keydown', (event) => {
 });
 
 function start() {
+  const state = getState();
   const question = getCurrentQuestion();
   if (!question) {
     window.location.href = 'result.html';
+    return;
+  }
+  if (state.answers.scenario === 'job-seeker' && state.currentIndex === 0) {
+    beginIntroConfirmation(state.landingText);
     return;
   }
   beginTurn(question);
