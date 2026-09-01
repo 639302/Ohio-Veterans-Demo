@@ -87,7 +87,7 @@ if (trigger && menu) {
       setIntent(scenario.goal);
       setScenario(scenario.value);
       if (scenario.promptText) setLandingText(scenario.promptText);
-      window.location.href = '/Ohio-Veterans-Demo/navigator/';
+      window.location.href = '/Ohio-Veterans-Demo/Ohio%20Veterans/navigator/';
     });
   }
 
