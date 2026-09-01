@@ -694,6 +694,10 @@ a:visited {
   margin-bottom: var(--spacing-lg1);
 }
 
+#landing-tablist {
+  margin-bottom: var(--spacing-lg1);
+}
+
 /* ====================================================================== */
 /* Chat-style intake (intake.html)                                        */
 /* ====================================================================== */
@@ -1007,56 +1011,27 @@ a:visited {
   display: none;
 }
 
-.result-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: var(--spacing-xs2);
-  border-bottom: 1px solid var(--color-neutral-6);
+#result-tablist {
   margin-bottom: var(--spacing-lg1);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-
-.result-tab {
-  flex-shrink: 0;
-  min-height: var(--size-xl-touch);
-  padding: var(--spacing-sm1) var(--spacing-md1);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font: inherit;
-  font-weight: var(--font-weight-medium);
-  font-size: 1rem;
-  color: var(--color-neutral-11);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.result-tab:hover {
-  background: var(--color-primary-2);
-  color: var(--color-primary-12);
-}
-
-.result-tab:focus-visible {
-  outline: var(--focus-ring-width) var(--focus-ring-style) var(--focus-ring-color);
-  outline-offset: var(--focus-ring-offset);
-}
-
-.result-tab[aria-selected="true"] {
-  border-bottom-color: var(--color-primary-9);
-  color: var(--color-primary-12);
-  font-weight: var(--font-weight-bold);
 }
 
 .result-tabpanel {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg1);
+  gap: var(--spacing-xl2);
 }
 
 .result-tabpanel[hidden] {
   display: none;
+}
+
+/* Each section renderer (MOS translation, SkillBridge, job listings,
+   employers) returns one wrapper element so .result-tabpanel's flex gap
+   applies only between sections, not between their internal heading/body/
+   list nodes. The heading's own margin-top would otherwise stack on top of
+   that gap since it isn't collapsed away inside a flex item. */
+.result-tabpanel__section > *:first-child {
+  margin-top: 0;
 }
 
 .result-tabpanel__placeholder {
@@ -1076,6 +1051,14 @@ a:visited {
   font-size: 1rem;
   font-weight: var(--font-weight-bold);
   margin: var(--spacing-lg1) 0 var(--spacing-sm1) 0;
+}
+
+.result-card__section-title--primary {
+  color: var(--color-primary-9);
+  font-size: var(--text-heading-2-size);
+  line-height: var(--text-heading-2-line-height);
+  letter-spacing: var(--text-heading-2-letter-spacing);
+  margin-bottom: var(--spacing-xs2);
 }
 
 /* Nested sub-card / list row — SkillBridge cards, employer rows, OVH facilities */
@@ -1104,6 +1087,15 @@ a:visited {
 
 .sub-card__cta {
   margin-top: var(--spacing-sm1);
+}
+
+/* Job-seeker Employment tab per-item mms-card lists (SkillBridge, job
+   listings, employers) — kept separate from .sub-card-list above so
+   Housing's OVH facility rows are unaffected. */
+.item-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap-default);
 }
 
 /* ====================================================================== */

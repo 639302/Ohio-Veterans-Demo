@@ -20,6 +20,25 @@ export function buildBenefitsCard() {
   };
 }
 
+export function buildEmploymentTopicCard() {
+  return {
+    key: 'employment-topic',
+    title: 'Employment',
+    icon: 'briefcase',
+    body: {
+      before: 'There are a variety of ways that Ohio is ready to help Veterans ',
+      linkLabel: 'translate their military experience',
+      linkHref: 'https://jobseeker.ohiomeansjobs.applygovt.com/ExploreIt/mst.aspx',
+      after: ' into civilian careers.',
+    },
+    links: [
+      { label: 'OhioMeansJobs', href: 'https://ohiomeansjobs.ohio.gov/home' },
+      { label: 'Find Your Ohio — Military & Veterans', href: 'https://www.findyourohio.com/military-veterans/' },
+      { label: 'Build your career after military service', href: 'https://ohiomeansjobs.ohio.gov/job-seekers/build-your-career/military-service' },
+    ],
+  };
+}
+
 export function buildGiBillCard() {
   return {
     key: 'gi-bill',
@@ -40,7 +59,7 @@ export function buildGiBillCard() {
 export function buildMentalHealthCard() {
   return {
     key: 'mental-health',
-    title: 'Mental Health',
+    title: 'Mental Health Support',
     icon: 'heart',
     variant: 'crisis',
     headline: 'You are not alone — help is available right now.',
@@ -55,6 +74,44 @@ export function buildMentalHealthCard() {
       linkLabel: 'community based behavioral counselor',
       linkHref: 'https://starproviders.org/find-support/',
       after: ' with training in military culture.',
+    },
+    selfCheck: {
+      before: 'The Department of Veterans Affairs and the National Suicide Prevention Lifeline have joined with the American Foundation for Suicide Prevention to create the ',
+      linkLabel: 'Veterans Self-Check Quiz',
+      linkHref: 'https://www.vetselfcheck.org/welcome.cfm',
+      after: '. This is a safe, easy way to learn whether stress and depression might be affecting you.',
+    },
+    selfCheckNote: 'Using this service is completely voluntary and confidential.',
+  };
+}
+
+export function buildVeteranSupportCard() {
+  return {
+    key: 'veteran-support',
+    title: 'Veteran Crisis Support',
+    icon: 'hand-heart',
+    headline: 'Preventing Veteran suicide starts with a conversation.',
+    body: "If a Veteran you care about is struggling, you have an opportunity to help. Let them know the Veterans Crisis Line is available — trained responders are ready to listen, and you can even offer to stay on a confidential three-way call for as long as they'd like support.",
+    warningSigns: {
+      intro: 'These signs may indicate a Veteran needs help. Contact the Veterans Crisis Line now: Dial 988 then Press 1.',
+      items: [
+        "Appearing sad, hopeless, or like there's no reason to live",
+        'Anxiety, agitation, sleeplessness, or mood swings',
+        'Excessive guilt, shame, or sense of failure',
+        'Rage, anger, or violent behavior (like punching a wall or getting into fights)',
+        'Increasing alcohol or drug misuse, or engaging in risky activities without thinking',
+        'Withdrawing from family and friends, losing interest in hobbies/work/school, or neglecting personal appearance',
+        'Giving away prized possessions or getting affairs in order',
+      ],
+    },
+    crisisSigns: {
+      intro: 'These signs require immediate attention. Call 911 for medical emergencies. For a suicide crisis, contact the Veterans Crisis Line: Dial 988 then Press 1.',
+      items: [
+        'Talking about or threatening to hurt or kill themselves',
+        'Looking for ways to end their life, such as searching online or seeking access to firearms or pills',
+        'Talking about death, dying, or suicide — even if it seems vague, joking, or offhand',
+        'Engaging in self-destructive behavior, like drug or alcohol abuse or misusing weapons',
+      ],
     },
   };
 }

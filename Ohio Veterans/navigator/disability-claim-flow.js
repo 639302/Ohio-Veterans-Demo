@@ -19,6 +19,8 @@ import {
 import { COUNTY_SELECT_OPTIONS, getCvsoInfo } from './county-data.js';
 import { setAnswer } from './state.js';
 import { createChatUI, wait } from './chat-ui.js';
+import { logIn } from './auth.js';
+import { renderAvatar } from './nav.js';
 
 const DEFAULT_PLACEHOLDER = 'Type your answer, or tap an option above';
 
@@ -387,6 +389,8 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       await wait(900);
       typing.remove();
       loggedIn = true;
+      logIn(profile.name);
+      renderAvatar();
       renderScreen('profile-summary');
     });
   }

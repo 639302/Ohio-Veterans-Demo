@@ -5,6 +5,7 @@
 // one browser tab/session, and is cleared on kiosk reset / Retry.
 
 import { QUESTIONS } from './questions.js';
+import { logOut } from './auth.js';
 
 const STORAGE_KEY = 'navigator-state-v1';
 
@@ -36,11 +37,15 @@ export function saveState(state) {
 // flow-chat.js's `navigator-flow-<id>-v1` sessionStorage keys) so a full
 // intake restart doesn't leave a stale conversation behind. Coupled to
 // flow-chat.js only by this key-prefix naming convention, not an import.
+// Also signs the veteran back out: a mock ID.me login completed during one
+// demo run (va-benefits-flow.js / disability-claim-flow.js) shouldn't carry
+// into the next run started from a fresh scenario/category pick.
 export function resetState() {
   sessionStorage.removeItem(STORAGE_KEY);
   Object.keys(sessionStorage)
     .filter((key) => key.startsWith('navigator-flow-'))
     .forEach((key) => sessionStorage.removeItem(key));
+  logOut();
 }
 
 export function setIntent(intent) {

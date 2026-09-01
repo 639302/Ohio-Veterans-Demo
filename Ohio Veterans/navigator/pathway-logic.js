@@ -83,8 +83,13 @@ function buildMosTranslationCard(answers) {
   return {
     key: 'mos-translation',
     title: 'Military Occupational Specialty to Civilian Translation',
-    icon: 'translate',
     body: buildMosTranslation(answers.branch),
+    learnMoreLink: {
+      before: 'To learn more about military skills translation, you can visit ',
+      linkLabel: 'this website',
+      linkHref: 'https://jobseeker.ohiomeansjobs.applygovt.com/ExploreIt/mst.aspx?_gl=1*5s862s*_gcl_au*MTgzNjg0MTQ3MS4xNzg2NDU5NzYx',
+      after: '.',
+    },
   };
 }
 
@@ -92,7 +97,12 @@ function buildSkillbridgeCard(answers) {
   if (answers.status !== 'currently-serving') return null;
   const listings = getSkillbridgeListings({ industries: answers.industries });
   if (!listings.length) return null;
-  return { key: 'skillbridge', title: 'SkillBridge Opportunities', icon: 'rocket-launch', listings };
+  return {
+    key: 'skillbridge',
+    title: 'SkillBridge Opportunities',
+    body: 'The DoW SkillBridge program is an opportunity for service members to gain valuable civilian work experience through specific industry training, apprenticeships, or internships during the last 180 days of service. DoW SkillBridge connects transitioning service members with industry providers in real-world job experiences.',
+    listings,
+  };
 }
 
 function buildJobListingsCard(answers) {
@@ -101,7 +111,6 @@ function buildJobListingsCard(answers) {
   return {
     key: 'job-listings',
     title: 'Open Job Listings',
-    icon: 'list-checks',
     listings,
     jobSearchLink: buildJobSearchLink(),
   };
@@ -110,7 +119,7 @@ function buildJobListingsCard(answers) {
 function buildEmployersCard(answers) {
   const employers = getEmployerListings({ county: answers.county, industries: answers.industries, limit: 5 });
   if (!employers.length) return null;
-  return { key: 'employers', title: 'Military-Friendly Employers Near You', icon: 'buildings', employers };
+  return { key: 'employers', title: 'Military-Friendly Employers Near You', employers };
 }
 
 // Job-seeker scenario only: one tab per job-focus option selected at the

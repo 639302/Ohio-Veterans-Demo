@@ -34,6 +34,8 @@
     "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
     "@mms/design-system/components/mms-modal": "../../node_modules/@mms/design-system/dist/components/modal/mms-modal.component.js",
     "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-tabs": "../../node_modules/@mms/design-system/dist/components/tabs/mms-tabs.component.js",
+    "@mms/design-system/components/mms-tabs-item": "../../node_modules/@mms/design-system/dist/components/tabs-item/mms-tabs-item.component.js",
     "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
     "/node_modules/@mms/design-system/dist/icons/icon-svgs.json": "/Ohio%20Veterans/navigator/icon-svgs-shim.js"
   }
@@ -45,6 +47,8 @@
   import '@mms/design-system/components/mms-icon';
   import '@mms/design-system/components/mms-link';
   import '@mms/design-system/components/mms-modal';
+  import '@mms/design-system/components/mms-tabs';
+  import '@mms/design-system/components/mms-tabs-item';
   import '@mms/design-system/components/mms-text-field';
 </script>
 </head>
@@ -125,7 +129,7 @@
     <div class="landing-content">
       <div class="landing-hero">
         <h1>Find the right benefits, services, and support in Ohio.</h1>
-        <p>Helping veterans, service members, families, and caregivers. Share the topic you are interested in learning about today. A few easy questions will help us create your personalized pathway to services across Ohio.</p>
+        <p>Our goal is to help veterans, service members, families, and caregivers get the help they need. Tell us what you're looking for in the search box and our AI chat assistant will connect you with personalized services across Ohio.</p>
       </div>
 
       <div class="landing-form" id="landing-form">
@@ -155,7 +159,7 @@
   <section class="landing-topics" aria-label="Explore common topics">
     <h2>Explore common topics</h2>
     <div class="result-tabs-wrapper" id="landing-tabs-wrapper">
-      <div class="result-tabs" id="landing-tablist" role="tablist" aria-label="Explore common topics"></div>
+      <mms-tabs id="landing-tablist" label="Explore common topics"></mms-tabs>
       <div id="landing-tabpanels"></div>
     </div>
   </section>

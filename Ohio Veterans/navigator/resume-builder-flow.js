@@ -38,7 +38,7 @@ export const RESUME_BUILDER_FLOW = {
     },
     'reviewing-resume': {
       prompt:
-        "Thanks — I'm parsing and extracting the details from your resume now. One more question: do you want recommendations tailored to a specific job?",
+        "Thanks — I'm reading through your resume now. One more question: would you like advice for a specific job you're interested in?",
       type: 'single',
       options: [
         { value: 'yes', label: 'Yes', next: 'request-job-description' },

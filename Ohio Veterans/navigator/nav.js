@@ -19,24 +19,26 @@ const createAccountButton = document.getElementById('nav-create-account-button')
 const loginModal = document.getElementById('login-modal');
 const createAccountModal = document.getElementById('create-account-modal');
 
+function getInitials(name) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0]?.slice(0, 2) || '';
+  return initials.toUpperCase();
+}
+
+// Exported so other modules (e.g. the bespoke chat scenario flows) can
+// refresh the header avatar after calling auth.js's logIn() directly.
+export function renderAvatar() {
+  if (avatar) {
+    const loggedIn = isLoggedIn();
+    avatar.classList.toggle('account-avatar--guest', !loggedIn);
+    avatar.innerHTML = loggedIn
+      ? getInitials(getDisplayName())
+      : '<mms-icon name="user" size="xl"></mms-icon>';
+  }
+  if (authButtons) authButtons.hidden = isLoggedIn();
+}
+
 if (trigger && menu) {
-  function getInitials(name) {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    const initials = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0]?.slice(0, 2) || '';
-    return initials.toUpperCase();
-  }
-
-  function renderAvatar() {
-    if (avatar) {
-      const loggedIn = isLoggedIn();
-      avatar.classList.toggle('account-avatar--guest', !loggedIn);
-      avatar.innerHTML = loggedIn
-        ? getInitials(getDisplayName())
-        : '<mms-icon name="user" size="xl"></mms-icon>';
-    }
-    if (authButtons) authButtons.hidden = isLoggedIn();
-  }
-
   function addAction(label, icon, action) {
     const button = document.createElement('button');
     button.type = 'button';

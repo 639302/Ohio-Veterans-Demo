@@ -85,60 +85,30 @@ function showEmptyState() {
 
 // Job-seeker scenario's per-job-focus tabs, one tab per selected option
 // (Employment, Resume Builder, Interview Help). Mirrors landing.js's static
-// topic-tab pattern (renderLandingTabs/activateLandingTab), adapted so each
-// panel holds a list of cards instead of exactly one.
-function activateResultTab(index) {
-  const tabButtons = Array.from(resultTablist.querySelectorAll('[role="tab"]'));
-  const panels = Array.from(resultTabpanels.querySelectorAll('[role="tabpanel"]'));
-  tabButtons.forEach((tab, i) => {
-    const selected = i === index;
-    tab.setAttribute('aria-selected', String(selected));
-    tab.tabIndex = selected ? 0 : -1;
-    if (selected) tab.focus();
-  });
-  panels.forEach((panel, i) => {
-    panel.hidden = i !== index;
-  });
-}
-
-function handleResultTablistKeydown(event) {
-  const tabButtons = Array.from(resultTablist.querySelectorAll('[role="tab"]'));
-  const currentIndex = tabButtons.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
-  let nextIndex = null;
-  if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabButtons.length;
-  else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
-  else if (event.key === 'Home') nextIndex = 0;
-  else if (event.key === 'End') nextIndex = tabButtons.length - 1;
-  if (nextIndex === null) return;
-  event.preventDefault();
-  activateResultTab(nextIndex);
-}
+// topic-tab pattern (renderLandingTabs), adapted so each panel holds a list
+// of cards instead of exactly one.
+const TAB_ICONS = {
+  employment: 'briefcase',
+  'resume-builder': 'file-text',
+  'interview-help': 'chat-circle-text',
+};
 
 function renderResultTabs(tabs) {
   resultTablist.innerHTML = '';
   resultTabpanels.innerHTML = '';
 
   tabs.forEach((tab, index) => {
-    const selected = index === 0;
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'result-tab';
-    button.id = `result-tab-${tab.key}`;
-    button.setAttribute('role', 'tab');
-    button.setAttribute('aria-selected', String(selected));
-    button.setAttribute('aria-controls', `result-tabpanel-${tab.key}`);
-    button.tabIndex = selected ? 0 : -1;
-    button.textContent = tab.label;
-    button.addEventListener('click', () => activateResultTab(index));
-    resultTablist.appendChild(button);
+    const tabItem = document.createElement('mms-tabs-item');
+    tabItem.setAttribute('icon', TAB_ICONS[tab.key] || 'briefcase');
+    tabItem.setAttribute('label', tab.label);
+    tabItem.setAttribute('panel-id', `result-tabpanel-${tab.key}`);
+    resultTablist.appendChild(tabItem);
 
     const panel = document.createElement('div');
     panel.className = 'result-tabpanel';
     panel.id = `result-tabpanel-${tab.key}`;
     panel.setAttribute('role', 'tabpanel');
-    panel.setAttribute('aria-labelledby', `result-tab-${tab.key}`);
-    panel.hidden = !selected;
+    panel.hidden = index !== 0;
 
     if (TAB_CHAT_FLOWS[tab.key]) {
       mountFlowChat(panel, TAB_CHAT_FLOWS[tab.key]);
@@ -157,7 +127,12 @@ function renderResultTabs(tabs) {
     resultTabpanels.appendChild(panel);
   });
 
-  resultTablist.addEventListener('keydown', handleResultTablistKeydown);
+  resultTablist.addEventListener('tab-change', (event) => {
+    const panels = Array.from(resultTabpanels.querySelectorAll('.result-tabpanel'));
+    panels.forEach((panel, i) => {
+      panel.hidden = i !== event.detail.index;
+    });
+  });
 }
 
 function showResults(answers) {

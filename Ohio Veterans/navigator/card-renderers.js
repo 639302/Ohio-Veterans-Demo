@@ -84,6 +84,52 @@ function renderMentalHealthCard(card) {
   body.appendChild(headline);
   body.appendChild(renderLinkedParagraph(card.body));
   if (card.communityCare) body.appendChild(renderLinkedParagraph(card.communityCare));
+  if (card.selfCheck) body.appendChild(renderLinkedParagraph(card.selfCheck));
+  if (card.selfCheckNote) {
+    const note = document.createElement('p');
+    note.innerHTML = `<em>${card.selfCheckNote}</em>`;
+    body.appendChild(note);
+  }
+  return el;
+}
+
+function renderVeteranSupportCard(card) {
+  const { el, body } = cardShell(card);
+  const headline = document.createElement('p');
+  headline.innerHTML = `<strong>${card.headline}</strong>`;
+  body.appendChild(headline);
+  const bodyText = document.createElement('p');
+  bodyText.textContent = card.body;
+  body.appendChild(bodyText);
+
+  const crisisIntro = document.createElement('p');
+  const crisisIcon = document.createElement('mms-icon');
+  crisisIcon.setAttribute('name', 'warning-circle');
+  crisisIcon.setAttribute('size', 'sm');
+  crisisIntro.append(crisisIcon, ` ${card.crisisSigns.intro}`);
+  body.appendChild(crisisIntro);
+  const crisisList = document.createElement('ul');
+  card.crisisSigns.items.forEach((item) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    crisisList.appendChild(li);
+  });
+  body.appendChild(crisisList);
+
+  const warningIntro = document.createElement('p');
+  const warningIcon = document.createElement('mms-icon');
+  warningIcon.setAttribute('name', 'warning');
+  warningIcon.setAttribute('size', 'sm');
+  warningIntro.append(warningIcon, ` ${card.warningSigns.intro}`);
+  body.appendChild(warningIntro);
+  const warningList = document.createElement('ul');
+  card.warningSigns.items.forEach((item) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    warningList.appendChild(li);
+  });
+  body.appendChild(warningList);
+
   return el;
 }
 
@@ -204,25 +250,58 @@ function renderEmploymentCard(card) {
 }
 
 // Job-seeker "Employment" tab: same sections as renderEmploymentCard above,
-// split into one card each.
+// rendered as plain heading + content (no outer mms-card around the
+// section) — individual listings/employers within each section are each
+// their own mms-card.
+function itemCard(titleText) {
+  const el = document.createElement('mms-card');
+  el.className = 'result-item-card';
+  el.setAttribute('variant', 'outlined');
+  el.setAttribute('roundness', 'subtle');
+  el.setAttribute('surface', 'tint');
+  el.setAttribute('title-text', titleText);
+  const body = document.createElement('div');
+  body.setAttribute('slot', 'body-content');
+  el.appendChild(body);
+  return { el, body };
+}
+
 function renderMosCard(card) {
-  const { el, body } = cardShell(card);
+  const section = document.createElement('div');
+  section.className = 'result-tabpanel__section';
+  const heading = document.createElement('h2');
+  heading.className = 'result-card__section-title result-card__section-title--primary';
+  heading.textContent = card.title;
   const bodyText = document.createElement('p');
-  bodyText.textContent = card.body;
-  body.appendChild(bodyText);
-  return el;
+  bodyText.append(card.body);
+  if (card.learnMoreLink) {
+    const link = document.createElement('mms-link');
+    link.setAttribute('href', card.learnMoreLink.linkHref);
+    link.setAttribute('target', '_blank');
+    link.setAttribute('label', card.learnMoreLink.linkLabel);
+    link.setAttribute('right-icon', 'arrow-square-out');
+    bodyText.append(' ', card.learnMoreLink.before, link, card.learnMoreLink.after);
+  }
+  section.append(heading, bodyText);
+  return section;
 }
 
 function renderSkillbridgeCard(card) {
-  const { el, body } = cardShell(card);
+  const section = document.createElement('div');
+  section.className = 'result-tabpanel__section';
+  const heading = document.createElement('h2');
+  heading.className = 'result-card__section-title result-card__section-title--primary';
+  heading.textContent = card.title;
+  section.appendChild(heading);
+  if (card.body) {
+    const bodyText = document.createElement('p');
+    bodyText.textContent = card.body;
+    section.appendChild(bodyText);
+  }
   const list = document.createElement('div');
-  list.className = 'sub-card-list';
+  list.className = 'item-card-list';
   card.listings.forEach((listing) => {
-    const sub = document.createElement('div');
-    sub.className = 'sub-card';
-    const subTitle = document.createElement('p');
-    subTitle.className = 'sub-card__title';
-    subTitle.textContent = `${listing.provider} — ${listing.city}, ${listing.state}`;
+    const { el, body } = itemCard(`${listing.provider} — ${listing.city}, ${listing.state}`);
     const mission = document.createElement('p');
     mission.textContent = listing.mission;
     const meta = document.createElement('p');
@@ -235,23 +314,24 @@ function renderSkillbridgeCard(card) {
     applyButton.setAttribute('variant', 'primary');
     applyButton.setAttribute('color-scheme', 'primary');
     applyButton.setAttribute('size', 'md');
-    sub.append(subTitle, mission, meta, applyButton);
-    list.appendChild(sub);
+    body.append(mission, meta, applyButton);
+    list.appendChild(el);
   });
-  body.appendChild(list);
-  return el;
+  section.appendChild(list);
+  return section;
 }
 
 function renderJobListingsCard(card) {
-  const { el, body } = cardShell(card);
+  const section = document.createElement('div');
+  section.className = 'result-tabpanel__section';
+  const heading = document.createElement('h2');
+  heading.className = 'result-card__section-title result-card__section-title--primary';
+  heading.textContent = card.title;
+  section.appendChild(heading);
   const list = document.createElement('div');
-  list.className = 'sub-card-list';
+  list.className = 'item-card-list';
   card.listings.forEach((job) => {
-    const sub = document.createElement('div');
-    sub.className = 'sub-card';
-    const subTitle = document.createElement('p');
-    subTitle.className = 'sub-card__title';
-    subTitle.textContent = `${job.title} — ${job.company}`;
+    const { el, body } = itemCard(`${job.title} — ${job.company}`);
     const meta = document.createElement('p');
     meta.className = 'sub-card__meta';
     meta.textContent = `${job.city}, OH · ${job.type}`;
@@ -262,48 +342,49 @@ function renderJobListingsCard(card) {
     applyButton.setAttribute('variant', 'primary');
     applyButton.setAttribute('color-scheme', 'primary');
     applyButton.setAttribute('size', 'md');
-    sub.append(subTitle, meta, applyButton);
-    list.appendChild(sub);
+    body.append(meta, applyButton);
+    list.appendChild(el);
   });
-  body.appendChild(list);
+  section.appendChild(list);
   if (card.jobSearchLink) {
     const link = document.createElement('mms-link');
     link.setAttribute('href', card.jobSearchLink.href);
     link.setAttribute('target', '_blank');
     link.setAttribute('label', card.jobSearchLink.label);
     link.setAttribute('right-icon', 'arrow-square-out');
-    body.appendChild(link);
+    section.appendChild(link);
   }
-  return el;
+  return section;
 }
 
 function renderEmployersCard(card) {
-  const { el, body } = cardShell(card);
+  const section = document.createElement('div');
+  section.className = 'result-tabpanel__section';
+  const heading = document.createElement('h2');
+  heading.className = 'result-card__section-title result-card__section-title--primary';
+  heading.textContent = card.title;
+  section.appendChild(heading);
   const list = document.createElement('div');
-  list.className = 'sub-card-list';
+  list.className = 'item-card-list';
   card.employers.forEach((employer) => {
-    const sub = document.createElement('div');
-    sub.className = 'sub-card';
-    const subTitle = document.createElement('p');
-    subTitle.className = 'sub-card__title';
-    subTitle.textContent = employer.company;
+    const { el, body } = itemCard(employer.company);
     const meta = document.createElement('p');
     meta.className = 'sub-card__meta';
     meta.textContent = employer.address
       ? `${employer.address} · ${employer.industrySector}`
       : `${employer.city}, OH · ${employer.industrySector}`;
-    sub.append(subTitle, meta);
-    list.appendChild(sub);
+    body.appendChild(meta);
+    list.appendChild(el);
   });
-  body.appendChild(list);
+  section.appendChild(list);
 
   const seeAll = document.createElement('mms-link');
   seeAll.setAttribute('href', 'https://ohiomeansjobs.ohio.gov/');
   seeAll.setAttribute('target', '_blank');
   seeAll.setAttribute('label', 'See all 9,310 military-friendly employers on OhioMeansJobs');
   seeAll.setAttribute('right-icon', 'arrow-square-out');
-  body.appendChild(seeAll);
-  return el;
+  section.appendChild(seeAll);
+  return section;
 }
 
 function renderGiBillCard(card) {
@@ -415,9 +496,7 @@ function renderNextStepsCard(card) {
 
 function renderBenefitsCard(card) {
   const { el, body } = cardShell(card);
-  const bodyText = document.createElement('p');
-  bodyText.textContent = card.body;
-  body.appendChild(bodyText);
+  body.appendChild(renderLinkedParagraph(card.body));
   body.appendChild(renderLinkList(card.links));
   return el;
 }
@@ -450,5 +529,7 @@ export const RENDERERS = {
   'next-steps': renderNextStepsCard,
   benefits: renderBenefitsCard,
   family: renderFamilyCard,
+  'employment-topic': renderBenefitsCard,
   'application-status': renderApplicationStatusCard,
+  'veteran-support': renderVeteranSupportCard,
 };

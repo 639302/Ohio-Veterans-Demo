@@ -32,6 +32,8 @@
     "@mms/design-system/components/mms-icon": "../../node_modules/@mms/design-system/dist/components/icon/mms-icon.component.js",
     "@mms/design-system/components/mms-modal": "../../node_modules/@mms/design-system/dist/components/modal/mms-modal.component.js",
     "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-tabs": "../../node_modules/@mms/design-system/dist/components/tabs/mms-tabs.component.js",
+    "@mms/design-system/components/mms-tabs-item": "../../node_modules/@mms/design-system/dist/components/tabs-item/mms-tabs-item.component.js",
     "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
     "/node_modules/@mms/design-system/dist/icons/icon-svgs.json": "/Ohio%20Veterans/navigator/icon-svgs-shim.js"
   }
@@ -44,6 +46,8 @@
   import '@mms/design-system/components/mms-icon';
   import '@mms/design-system/components/mms-modal';
   import '@mms/design-system/components/mms-radio';
+  import '@mms/design-system/components/mms-tabs';
+  import '@mms/design-system/components/mms-tabs-item';
   import '@mms/design-system/components/mms-text-field';
 </script>
 </head>
@@ -143,7 +147,7 @@
     <h1 tabindex="-1" id="results-heading">Your Pathway</h1>
     <div class="result-grid result-grid--persistent" id="persistent-grid"></div>
     <div class="result-tabs-wrapper" id="result-tabs-wrapper" hidden>
-      <div class="result-tabs" id="result-tablist" role="tablist" aria-label="Your pathway topics"></div>
+      <mms-tabs id="result-tablist" label="Your pathway topics"></mms-tabs>
       <div id="result-tabpanels"></div>
     </div>
     <div class="result-grid" id="employment-grid"></div>
