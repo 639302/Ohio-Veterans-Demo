@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="uss-oh-dvs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Pathway | The Navigator | Ohio Department of Veterans Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-primitives.css">
+<link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-structural.css">
+<link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-semantic.css">
+<link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
+<link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
+<link rel="stylesheet" href="styles.css?v=5">
+<script type="importmap">
+{
+  "imports": {
+    "lit": "../../node_modules/lit/index.js",
+    "lit/": "../../node_modules/lit/",
+    "lit-html": "../../node_modules/lit-html/lit-html.js",
+    "lit-html/": "../../node_modules/lit-html/",
+    "lit-element": "../../node_modules/lit-element/index.js",
+    "lit-element/": "../../node_modules/lit-element/",
+    "@lit/reactive-element": "../../node_modules/@lit/reactive-element/reactive-element.js",
+    "@lit/reactive-element/": "../../node_modules/@lit/reactive-element/",
+    "@lit-labs/ssr-dom-shim": "../../node_modules/@lit-labs/ssr-dom-shim/index.js",
+    "@lit-labs/ssr-dom-shim/": "../../node_modules/@lit-labs/ssr-dom-shim/",
+    "@mms/design-system/components/mms-button": "../../node_modules/@mms/design-system/dist/components/button/mms-button.component.js",
+    "@mms/design-system/components/mms-card": "../../node_modules/@mms/design-system/dist/components/card/mms-card.component.js",
+    "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
+    "@mms/design-system/components/mms-icon": "../../node_modules/@mms/design-system/dist/components/icon/mms-icon.component.js",
+    "@mms/design-system/components/mms-modal": "../../node_modules/@mms/design-system/dist/components/modal/mms-modal.component.js",
+    "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-tabs": "../../node_modules/@mms/design-system/dist/components/tabs/mms-tabs.component.js",
+    "@mms/design-system/components/mms-tabs-item": "../../node_modules/@mms/design-system/dist/components/tabs-item/mms-tabs-item.component.js",
+    "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
+    "/Ohio-Veterans-Demo/node_modules/@mms/design-system/dist/icons/icon-svgs.json": "./icon-svgs-shim.js"
+  }
+}
+</script>
+<script type="module">
+  import '@mms/design-system/components/mms-button';
+  import '@mms/design-system/components/mms-card';
+  import '@mms/design-system/components/mms-link';
+  import '@mms/design-system/components/mms-icon';
+  import '@mms/design-system/components/mms-modal';
+  import '@mms/design-system/components/mms-radio';
+  import '@mms/design-system/components/mms-tabs';
+  import '@mms/design-system/components/mms-tabs-item';
+  import '@mms/design-system/components/mms-text-field';
+</script>
+</head>
+<body>
+<div class="gov-banner">
+  <button type="button" class="gov-banner__toggle" id="gov-banner-toggle" aria-expanded="false" aria-controls="gov-banner-panel">
+    <span>An official State of Ohio site.</span>
+    <span class="gov-banner__toggle-label">Here's how you know <mms-icon name="caret-down" size="sm"></mms-icon></span>
+  </button>
+  <div class="gov-banner__panel" id="gov-banner-panel" hidden>
+    <div class="gov-banner__item">
+      <mms-icon name="flag" size="lg"></mms-icon>
+      <div><strong>Official websites use Ohio.gov</strong><p>An Ohio.gov website belongs to an official government organization in the State of Ohio.</p></div>
+    </div>
+    <div class="gov-banner__item">
+      <mms-icon name="lock" size="lg"></mms-icon>
+      <div><strong>Secure .gov websites use HTTPS</strong><p>A lock or https:// means you've safely connected to the .gov website. Share sensitive information only on official, secure websites.</p></div>
+    </div>
+    <div class="gov-banner__item">
+      <mms-icon name="shield-check" size="lg"></mms-icon>
+      <div><strong>Trusted applications are secured by OHID</strong><p>When you log in with OHID, your privacy, data, and personal information are protected by federal and state digital security standards.</p></div>
+    </div>
+  </div>
+</div>
+<header class="nav-header">
+  <a href="/Ohio-Veterans-Demo/navigator/" class="nav-header__brand">
+    <img src="assets/odvs-logo-horiz-for-taleo.webp" alt="Ohio Department of Veterans Services" class="nav-header__logo">
+    <span class="nav-header__title">The Navigator</span>
+  </a>
+  <mms-button id="nav-menu-toggle" variant="ghost" color-scheme="primary" icon-only left-icon="list" label="Menu" size="lg" aria-expanded="false" aria-controls="nav-collapsible" aria-haspopup="true"></mms-button>
+  <div class="nav-header__collapsible" id="nav-collapsible">
+    <nav class="nav-header__nav" aria-label="Primary">
+      <a href="/Ohio-Veterans-Demo/navigator/">Home</a>
+      <a href="result.html">Your Pathway</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="nav-header__account">
+      <div class="nav-header__auth-buttons" id="nav-auth-buttons">
+        <mms-button id="nav-login-button" variant="primary" color-scheme="primary" label="Login" size="md"></mms-button>
+        <mms-button id="nav-create-account-button" variant="secondary" color-scheme="primary" label="Create an Account" size="md"></mms-button>
+      </div>
+      <button type="button" class="account-trigger" id="nav-account-button" aria-expanded="false" aria-haspopup="true" aria-label="Account menu">
+        <span class="account-avatar" id="account-avatar" aria-hidden="true"></span>
+        <mms-icon name="caret-down" size="sm"></mms-icon>
+      </button>
+      <div class="account-menu" id="account-menu" hidden></div>
+    </div>
+  </div>
+</header>
+
+<mms-modal id="login-modal" size="sm" title-text="Login" primary-label="Login" secondary-label="Cancel" color-scheme="primary">
+  <p class="auth-modal-copy">Log in to save your progress and any information you share with us along the way. If you connect your VA account through ID.me or Login.gov, we can use that information to help guide you further.</p>
+  <form class="auth-modal-form" id="login-form">
+    <mms-text-field id="login-email" label="Email" input-type="email" required></mms-text-field>
+    <mms-text-field id="login-password" label="Password" input-type="password" required></mms-text-field>
+  </form>
+  <div class="auth-modal-divider"><span>or</span></div>
+  <div class="auth-modal-idp-buttons">
+    <button type="button" class="auth-idp-button auth-idp-button--idme" id="login-idme-button">ID.me</button>
+    <button type="button" class="auth-idp-button auth-idp-button--logingov" id="login-logingov-button">
+      <mms-icon name="shield-check" size="sm"></mms-icon>
+      <span>LOGIN.GOV</span>
+    </button>
+  </div>
+</mms-modal>
+
+<mms-modal id="create-account-modal" size="sm" title-text="Create an Account" primary-label="Create Account" secondary-label="Cancel" color-scheme="primary">
+  <p class="auth-modal-copy">Create an account so we can save your progress and any information you share with us along the way. If you connect your VA account through ID.me or Login.gov, we can use that information to help guide you further.</p>
+  <form class="auth-modal-form" id="create-account-form">
+    <mms-text-field id="create-account-name" label="Full Name" required></mms-text-field>
+    <mms-text-field id="create-account-email" label="Email" input-type="email" required></mms-text-field>
+    <mms-text-field id="create-account-password" label="Password" input-type="password" required></mms-text-field>
+  </form>
+</mms-modal>
+
+<main class="layout-container">
+  <div class="loading-screen" id="loading-screen" aria-live="polite">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <p>Building your pathway…</p>
+  </div>
+
+  <div id="error-screen" class="error-state" hidden>
+    <h1 tabindex="-1" id="error-heading">We're having trouble putting together your results.</h1>
+    <p id="error-body"></p>
+    <mms-button id="retry-button" label="Try again" variant="primary" color-scheme="primary" size="lg"></mms-button>
+  </div>
+
+  <div id="empty-screen" class="empty-state" hidden>
+    <div class="landing-hero">
+      <h1 tabindex="-1" id="empty-heading">Your Pathway</h1>
+      <p>To help generate a suggested pathway for you, select a topic that you need help with today.</p>
+    </div>
+    <div class="category-grid" id="empty-category-grid" role="list"></div>
+  </div>
+
+  <div id="results-screen" hidden>
+    <h1 tabindex="-1" id="results-heading">Your Pathway</h1>
+    <div class="result-grid result-grid--persistent" id="persistent-grid"></div>
+    <div class="result-tabs-wrapper" id="result-tabs-wrapper" hidden>
+      <mms-tabs id="result-tablist" label="Your pathway topics"></mms-tabs>
+      <div id="result-tabpanels"></div>
+    </div>
+    <div class="result-grid" id="employment-grid"></div>
+  </div>
+</main>
+
+<script type="module" src="nav.js"></script>
+<script type="module" src="result.js"></script>
+</body>
+</html>
