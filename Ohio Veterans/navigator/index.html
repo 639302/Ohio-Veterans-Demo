@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-semantic.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=15">
 <script type="importmap">
 {
   "imports": {
@@ -34,6 +34,7 @@
     "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
     "@mms/design-system/components/mms-modal": "../../node_modules/@mms/design-system/dist/components/modal/mms-modal.component.js",
     "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-select": "../../node_modules/@mms/design-system/dist/components/select/mms-select.component.js",
     "@mms/design-system/components/mms-tabs": "../../node_modules/@mms/design-system/dist/components/tabs/mms-tabs.component.js",
     "@mms/design-system/components/mms-tabs-item": "../../node_modules/@mms/design-system/dist/components/tabs-item/mms-tabs-item.component.js",
     "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
@@ -47,6 +48,7 @@
   import '@mms/design-system/components/mms-icon';
   import '@mms/design-system/components/mms-link';
   import '@mms/design-system/components/mms-modal';
+  import '@mms/design-system/components/mms-select';
   import '@mms/design-system/components/mms-tabs';
   import '@mms/design-system/components/mms-tabs-item';
   import '@mms/design-system/components/mms-text-field';
@@ -132,7 +134,7 @@
         <p>Our goal is to help veterans, service members, families, and caregivers get the help they need. Tell us what you're looking for in the search box and our AI chat assistant will connect you with personalized services across Ohio.</p>
       </div>
 
-      <div class="landing-form" id="landing-form">
+      <div class="landing-form" id="landing-form" hidden>
         <label class="visually-hidden" for="landing-text-input">Tell us what you need</label>
         <div class="landing-form__row">
           <mms-text-field
@@ -142,6 +144,24 @@
           ></mms-text-field>
           <mms-button
             id="landing-submit"
+            label="Get Started"
+            variant="primary"
+            color-scheme="primary"
+            size="lg"
+          ></mms-button>
+        </div>
+      </div>
+
+      <div class="landing-form" id="landing-scenario-form" hidden>
+        <label class="visually-hidden" for="landing-scenario-select">Choose what best describes you</label>
+        <div class="landing-form__row">
+          <mms-select
+            id="landing-scenario-select"
+            placeholder="What best describes you?"
+            size="lg"
+          ></mms-select>
+          <mms-button
+            id="landing-scenario-submit"
             label="Get Started"
             variant="primary"
             color-scheme="primary"

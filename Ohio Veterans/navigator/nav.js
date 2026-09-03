@@ -5,7 +5,7 @@
 // instant-toggle session state and theme.js's persisted mode, plus a "Try a
 // scenario" section that seeds a guided-persona goal and jumps into intake.
 
-import { isLoggedIn, logIn, logOut, getDisplayName } from './auth.js';
+import { isLoggedIn, logIn, logOut, getDisplayName, isStakeholder } from './auth.js';
 import { isDarkMode, setDarkMode } from './theme.js';
 import { resetState, setIntent, setScenario, setLandingText } from './state.js';
 import { SCENARIOS } from './scenarios.js';
@@ -91,8 +91,30 @@ if (trigger && menu) {
     });
   }
 
+  function addStakeholderRow() {
+    addAction('ODVS Stakeholder', 'chart-bar', () => {
+      resetState();
+      logIn('ODVS Stakeholder', 'stakeholder');
+      window.location.href = 'dashboard.html';
+    });
+  }
+
   function renderMenuItems() {
     menu.innerHTML = '';
+    if (isStakeholder()) {
+      addAction('Dashboard', 'chart-bar', () => {
+        window.location.href = 'dashboard.html';
+      });
+      addDivider();
+      addThemeRow('Light Mode', 'sun', false);
+      addThemeRow('Dark Mode', 'moon', true);
+      addDivider();
+      addAction('Sign out', 'sign-out', () => {
+        logOut();
+        window.location.href = '/Ohio-Veterans-Demo/Ohio%20Veterans/navigator/';
+      });
+      return;
+    }
     if (isLoggedIn()) {
       addAction('Profile', 'user-circle', () => {});
       addDivider();
@@ -107,6 +129,7 @@ if (trigger && menu) {
     addDivider();
     addLabel('Try a scenario');
     SCENARIOS.forEach(addScenarioRow);
+    addStakeholderRow();
   }
 
   renderAvatar();
@@ -315,6 +338,11 @@ document.querySelectorAll('.nav-header__nav a').forEach((link) => {
 
 const govBannerToggle = document.getElementById('gov-banner-toggle');
 const govBannerPanel = document.getElementById('gov-banner-panel');
+
+if (isStakeholder()) {
+  const brandLink = document.querySelector('.nav-header__brand');
+  if (brandLink) brandLink.setAttribute('href', 'dashboard.html');
+}
 
 if (govBannerToggle && govBannerPanel) {
   govBannerToggle.addEventListener('click', () => {

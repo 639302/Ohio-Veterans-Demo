@@ -17,7 +17,7 @@ import {
   goToPrevious,
   isLastQuestion,
 } from './state.js';
-import { createChatUI, wait } from './chat-ui.js';
+import { createChatUI, wait, renderOptionList } from './chat-ui.js';
 import { startVaBenefitsFlow, isVaBenefitsFlowActive } from './va-benefits-flow.js';
 import { startDisabilityClaimFlow, isDisabilityClaimFlowActive } from './disability-claim-flow.js';
 
@@ -43,6 +43,8 @@ const {
 let currentSelection = new Set();
 let currentAgentNode = null;
 let currentCrisisNode = null;
+let disposeOptionList = null;
+let currentOptionsPanel = null;
 
 // Job-seeker and Healthcare-seeker scenarios: gates the first real question
 // behind a Yes/No confirmation of the landing-page request, before any
@@ -76,19 +78,11 @@ function toggleCrisisMessage(question, show) {
   }
 }
 
-// A chip is a pill wrapper around one mms-radio/mms-checkbox (pointer-events:
-// none on the control) so the whole chip is the tap target — same pattern as
-// the landing/original stepper's .tap-card wrapper. Clicking the shadow-DOM
-// control itself retargets event.target to the control's host, so only
-// clicks landing on the chip's own padding need forwarding.
-function forwardChipClickToControl(chip, control) {
-  chip.addEventListener('click', (event) => {
-    if (event.target !== chip) return;
-    control.shadowRoot?.querySelector('input')?.click();
-  });
-}
-
 function clearQuickReplies() {
+  disposeOptionList?.();
+  disposeOptionList = null;
+  currentOptionsPanel?.remove();
+  currentOptionsPanel = null;
   quickReplies.innerHTML = '';
   currentSelection = new Set();
 }
@@ -100,52 +94,29 @@ function updateContinueButton() {
 }
 
 function renderSingleChips(question, existingValue) {
-  question.options.forEach((option) => {
-    const chip = document.createElement('div');
-    chip.className = 'chat-chip';
-    if (option.value === existingValue) chip.classList.add('is-selected');
-
-    const radio = document.createElement('mms-radio');
-    radio.className = 'chat-chip__control';
-    radio.setAttribute('label', option.label);
-    radio.setAttribute('value', option.value);
-    radio.setAttribute('color-scheme', 'primary');
-    if (option.value === existingValue) radio.setAttribute('selected', '');
-
-    radio.addEventListener('change', (event) => {
-      if (!event.detail.selected) return;
-      submitAnswer(question, option.value, option.label);
-    });
-
-    const label = document.createElement('span');
-    label.className = 'chat-chip__label';
-    label.setAttribute('aria-hidden', 'true');
-    label.textContent = option.label;
-
-    chip.append(radio, label);
-    forwardChipClickToControl(chip, radio);
-    quickReplies.appendChild(chip);
+  const bubble = currentAgentNode?.querySelector('.chat-message__bubble') || quickReplies;
+  const { dispose, panel } = renderOptionList(bubble, question.options, {
+    mode: 'single',
+    selected: existingValue,
+    textInput,
+    onSelect: (value) => {
+      const option = question.options.find((candidate) => candidate.value === value);
+      submitAnswer(question, value, option.label);
+    },
   });
+  disposeOptionList = dispose;
+  currentOptionsPanel = panel;
 }
 
 function renderMultiChips(question, existingValues) {
   currentSelection = new Set(existingValues || []);
 
-  question.options.forEach((option) => {
-    const chip = document.createElement('div');
-    chip.className = 'chat-chip';
-    if (currentSelection.has(option.value)) chip.classList.add('is-selected');
-
-    const checkbox = document.createElement('mms-checkbox');
-    checkbox.className = 'chat-chip__control';
-    checkbox.setAttribute('label', option.label);
-    checkbox.setAttribute('checked-value', option.value);
-    checkbox.setAttribute('color-scheme', 'primary');
-    if (currentSelection.has(option.value)) checkbox.setAttribute('checked', '');
-
-    checkbox.addEventListener('change', (event) => {
-      const { checked, value } = event.detail;
-      chip.classList.toggle('is-selected', checked);
+  const bubble = currentAgentNode?.querySelector('.chat-message__bubble') || quickReplies;
+  const { dispose, panel } = renderOptionList(bubble, question.options, {
+    mode: 'multi',
+    selected: currentSelection,
+    textInput,
+    onToggle: (value, checked) => {
       if (checked) currentSelection.add(value);
       else currentSelection.delete(value);
 
@@ -153,32 +124,17 @@ function renderMultiChips(question, existingValues) {
         toggleCrisisMessage(question, currentSelection.has(question.crisisValue));
       }
       updateContinueButton();
-    });
-
-    const label = document.createElement('span');
-    label.className = 'chat-chip__label';
-    label.setAttribute('aria-hidden', 'true');
-    label.textContent = option.label;
-
-    chip.append(checkbox, label);
-    forwardChipClickToControl(chip, checkbox);
-    quickReplies.appendChild(chip);
+    },
+    onSubmit: () => {
+      if (currentSelection.size === 0) return;
+      const labels = question.options
+        .filter((option) => currentSelection.has(option.value))
+        .map((option) => option.label);
+      submitAnswer(question, Array.from(currentSelection), labels.join(', '));
+    },
   });
-
-  const continueButton = document.createElement('mms-button');
-  continueButton.id = 'continue-button';
-  continueButton.setAttribute('label', 'Continue');
-  continueButton.setAttribute('variant', 'primary');
-  continueButton.setAttribute('color-scheme', 'primary');
-  continueButton.setAttribute('size', 'md');
-  continueButton.addEventListener('click', () => {
-    if (currentSelection.size === 0) return;
-    const labels = question.options
-      .filter((option) => currentSelection.has(option.value))
-      .map((option) => option.label);
-    submitAnswer(question, Array.from(currentSelection), labels.join(', '));
-  });
-  quickReplies.appendChild(continueButton);
+  disposeOptionList = dispose;
+  currentOptionsPanel = panel;
   updateContinueButton();
 
   if (question.crisisValue) {
