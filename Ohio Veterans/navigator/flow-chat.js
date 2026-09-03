@@ -10,6 +10,7 @@
 // `navigator-flow-` key prefix convention (naming-only coupling, no import).
 
 import { matchOptionsFromText } from './questions.js';
+import { renderOptionList } from './chat-ui.js';
 
 const DEFAULT_CLOSING_MESSAGE = "Thanks! I'll have more questions to help build out your resume soon.";
 
@@ -31,6 +32,9 @@ export function mountFlowChat(container, flow) {
   }
 
   const state = loadState() || { currentNodeId: flow.start, transcript: [], completed: false };
+  let disposeOptionList = null;
+  let currentOptionsPanel = null;
+  let currentAgentNode = null;
 
   container.innerHTML = '';
 
@@ -98,6 +102,7 @@ export function mountFlowChat(container, flow) {
     message.append(avatar, bubble);
     transcriptEl.appendChild(message);
     scrollToBottom();
+    return message;
   }
 
   function renderUserBubble(text) {
@@ -133,7 +138,7 @@ export function mountFlowChat(container, flow) {
   }
 
   function appendAgentMessage(text) {
-    renderAgentBubble(text);
+    currentAgentNode = renderAgentBubble(text);
     state.transcript.push({ role: 'agent', text });
     saveState();
   }
@@ -149,6 +154,10 @@ export function mountFlowChat(container, flow) {
   }
 
   function clearQuickReplies() {
+    disposeOptionList?.();
+    disposeOptionList = null;
+    currentOptionsPanel?.remove();
+    currentOptionsPanel = null;
     quickReplies.innerHTML = '';
   }
 
@@ -162,41 +171,18 @@ export function mountFlowChat(container, flow) {
     }
   }
 
-  // Same forwarding technique as intake.js: the chip's own padding is the
-  // tap target, but a click landing on the (visually hidden) mms-radio
-  // control itself should not be double-forwarded.
-  function forwardChipClickToControl(chip, control) {
-    chip.addEventListener('click', (event) => {
-      if (event.target !== chip) return;
-      control.shadowRoot?.querySelector('input')?.click();
-    });
-  }
-
   function renderSingleChips(node) {
-    node.options.forEach((option) => {
-      const chip = document.createElement('div');
-      chip.className = 'chat-chip';
-
-      const radio = document.createElement('mms-radio');
-      radio.className = 'chat-chip__control';
-      radio.setAttribute('label', option.label);
-      radio.setAttribute('value', option.value);
-      radio.setAttribute('color-scheme', 'primary');
-
-      radio.addEventListener('change', (event) => {
-        if (!event.detail.selected) return;
+    const bubble = currentAgentNode?.querySelector('.chat-message__bubble') || quickReplies;
+    const { dispose, panel } = renderOptionList(bubble, node.options, {
+      mode: 'single',
+      textInput,
+      onSelect: (value) => {
+        const option = node.options.find((candidate) => candidate.value === value);
         submitAnswer(node, option, option.label);
-      });
-
-      const chipLabel = document.createElement('span');
-      chipLabel.className = 'chat-chip__label';
-      chipLabel.setAttribute('aria-hidden', 'true');
-      chipLabel.textContent = option.label;
-
-      chip.append(radio, chipLabel);
-      forwardChipClickToControl(chip, radio);
-      quickReplies.appendChild(chip);
+      },
     });
+    disposeOptionList = dispose;
+    currentOptionsPanel = panel;
   }
 
   // Fakes a file upload for demo purposes: a real native file picker (so it
@@ -309,7 +295,7 @@ export function mountFlowChat(container, flow) {
 
   if (state.transcript.length) {
     state.transcript.forEach((entry) => {
-      if (entry.role === 'agent') renderAgentBubble(entry.text);
+      if (entry.role === 'agent') currentAgentNode = renderAgentBubble(entry.text);
       else renderUserBubble(entry.text);
     });
   } else {

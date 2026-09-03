@@ -577,6 +577,10 @@ a:visited {
   gap: var(--spacing-sm2);
 }
 
+.landing-form[hidden] {
+  display: none;
+}
+
 .landing-form__row {
   display: flex;
   flex-direction: column;
@@ -587,6 +591,11 @@ a:visited {
     flex-direction: row;
   }
   .landing-form__row mms-text-field {
+    flex: 1;
+    min-width: 0;
+    --spacing-md1: 9px;
+  }
+  .landing-form__row mms-select {
     flex: 1;
     min-width: 0;
     --spacing-md1: 9px;
@@ -854,6 +863,12 @@ a:visited {
   align-items: center;
 }
 
+.chat-quick-replies mms-select {
+  flex: 1;
+  min-width: 0;
+  --spacing-md1: 9px;
+}
+
 .chat-chip {
   display: inline-flex;
   align-items: center;
@@ -902,6 +917,29 @@ a:visited {
 
 .chat-chip__label {
   pointer-events: none;
+}
+
+/* Checklist panel for single/multi-select questions (intake.js,
+   flow-chat.js), rendered by chat-ui.js's renderOptionList as an
+   mms-radio-group/mms-checkbox-group wrapping plain mms-radio/mms-checkbox
+   children — no bespoke row/highlight styling here, so checked-state
+   rendering (indicator fill only, no per-row background) matches the DS
+   components exactly instead of the previous hand-rolled bordered "card"
+   rows, which broke apart visually when several adjacent rows were checked.
+   Rendered as part of the agent bubble itself (see renderOptionList's
+   `bubble` container arg), so it has no border/background of its own — it
+   inherits the bubble's. */
+.chat-options {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--spacing-sm1);
+}
+
+.chat-options__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-sm1);
 }
 
 .chat-input-row {
@@ -1177,4 +1215,151 @@ a:visited {
 
 .about-section mms-button {
   margin-top: var(--spacing-md1);
+}
+
+/* ====================================================================== */
+/* ODVS Stakeholder Dashboard                                             */
+/* ====================================================================== */
+
+.dashboard-sample-caption {
+  color: var(--color-neutral-11);
+  font-style: italic;
+}
+
+.dashboard-section {
+  margin-top: var(--spacing-xl2);
+}
+
+.dashboard-section h2 {
+  font-size: 1.25rem;
+  color: var(--color-primary-9);
+}
+
+.dashboard-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--layout-gap-default);
+}
+@media (min-width: 768px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.dashboard-kpi-value {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-12);
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  text-align: left;
+  padding: var(--spacing-sm2) var(--spacing-sm1);
+  border-bottom: 1px solid var(--color-neutral-6);
+}
+
+.dashboard-table__detail-row td {
+  background: var(--color-neutral-2);
+  padding-top: var(--spacing-sm1);
+  padding-bottom: var(--spacing-sm1);
+}
+
+.dashboard-table__detail-row p {
+  margin: 0 0 var(--spacing-xs2) 0;
+}
+
+.dashboard-table__detail-row p:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-hbar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm2);
+}
+
+.dashboard-hbar-chart__row {
+  display: grid;
+  grid-template-columns: 10rem 1fr 3.5rem;
+  align-items: center;
+  gap: var(--spacing-sm1);
+}
+
+.dashboard-hbar-chart__label {
+  color: var(--color-neutral-12);
+  font-size: 0.875rem;
+}
+
+.dashboard-hbar-chart__track {
+  display: block;
+  height: 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-neutral-4);
+  overflow: hidden;
+}
+
+.dashboard-hbar-chart__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-9);
+}
+
+.dashboard-hbar-chart__value {
+  text-align: right;
+  font-size: 0.875rem;
+  color: var(--color-neutral-11);
+}
+
+.dashboard-vbar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-md1);
+  height: 200px;
+  padding-top: var(--spacing-md1);
+}
+
+.dashboard-vbar-chart__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs2);
+  flex: 1;
+  height: 100%;
+}
+
+.dashboard-vbar-chart__value {
+  font-size: 0.75rem;
+  color: var(--color-neutral-11);
+}
+
+.dashboard-vbar-chart__bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  flex: 1;
+  width: 100%;
+}
+
+.dashboard-vbar-chart__bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--color-primary-9);
+}
+
+.dashboard-vbar-chart__label {
+  font-size: 0.75rem;
+  color: var(--color-neutral-11);
 }

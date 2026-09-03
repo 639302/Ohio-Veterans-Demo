@@ -23,8 +23,21 @@ export function getDisplayName() {
   }
 }
 
-export function logIn(name) {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ loggedIn: true, name: name || DEFAULT_NAME }));
+export function getRole() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw).role : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function isStakeholder() {
+  return getRole() === 'stakeholder';
+}
+
+export function logIn(name, role) {
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ loggedIn: true, name: name || DEFAULT_NAME, role }));
 }
 
 export function logOut() {
