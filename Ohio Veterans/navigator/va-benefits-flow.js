@@ -17,7 +17,7 @@ import {
 } from './va-benefits-data.js';
 import { COUNTY_SELECT_OPTIONS, getCvsoInfo } from './county-data.js';
 import { setAnswer } from './state.js';
-import { createChatUI, wait } from './chat-ui.js';
+import { createChatUI, wait } from './chat-ui.js?v=2';
 import { logIn } from './auth.js';
 import { renderAvatar } from './nav.js';
 
@@ -251,9 +251,9 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   }
 
   function renderStatusLoginScreen() {
-    appendAgentMessage("Let's pull that up — I'll need to log you into your ID.me account.");
-    addButton('Log in with ID.me', 'primary', async () => {
-      appendUserMessage('Log in with ID.me');
+    appendAgentMessage("This prototype can show a sample sign-in step, but it does not connect to ID.me or access your VA information.");
+    addButton('Continue with sample sign-in', 'primary', async () => {
+      appendUserMessage('Continue with sample sign-in');
       clearQuickReplies();
       const typing = appendTypingIndicator();
       await wait(900);
@@ -325,9 +325,9 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   }
 
   function renderLoginScreen() {
-    appendAgentMessage("To get started, let's log you into your ID.me account so I can pull in your information.");
-    addButton('Log in with ID.me', 'primary', async () => {
-      appendUserMessage('Log in with ID.me');
+    appendAgentMessage("This prototype can show a sample sign-in step, but it does not connect to ID.me or access your VA information.");
+    addButton('Continue with sample sign-in', 'primary', async () => {
+      appendUserMessage('Continue with sample sign-in');
       clearQuickReplies();
       const typing = appendTypingIndicator();
       await wait(900);

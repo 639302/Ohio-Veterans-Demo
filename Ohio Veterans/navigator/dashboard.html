@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-semantic.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 <script type="importmap">
 {
   "imports": {
@@ -49,6 +49,7 @@
 </script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="gov-banner">
   <button type="button" class="gov-banner__toggle" id="gov-banner-toggle" aria-expanded="false" aria-controls="gov-banner-panel">
     <span>An official State of Ohio site.</span>
@@ -72,7 +73,6 @@
 <header class="nav-header">
   <a href="dashboard.html" class="nav-header__brand">
     <img src="assets/odvs-logo-horiz-for-taleo.webp" alt="Ohio Department of Veterans Services" class="nav-header__logo">
-    <span class="nav-header__title">The Navigator</span>
   </a>
   <mms-button id="nav-menu-toggle" variant="ghost" color-scheme="primary" icon-only left-icon="list" label="Menu" size="lg" aria-expanded="false" aria-controls="nav-collapsible" aria-haspopup="true"></mms-button>
   <div class="nav-header__collapsible" id="nav-collapsible">
@@ -90,7 +90,7 @@
   </div>
 </header>
 
-<main class="layout-container">
+<main class="layout-container" id="main-content">
   <h1>ODVS Stakeholder Dashboard</h1>
   <p class="dashboard-sample-caption">Sample data for demonstration purposes</p>
 

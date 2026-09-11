@@ -8,7 +8,7 @@ import { getCvsoInfo } from './county-data.js';
 import { getSkillbridgeListings } from './skillbridge-data.js';
 import { getEmployerListings, registerIndustryBuckets } from './employer-data.js';
 import { getJobListings } from './job-listings-data.js';
-import { INDUSTRY_BUCKETS } from './questions.js';
+import { INDUSTRY_BUCKETS } from './questions.js?v=4';
 
 const JOB_SEARCH_URL = 'https://jobs.ohiomeansjobs.applygovt.com/Search.aspx?pg=1&sid=68&rad=20&rad_units=miles';
 
@@ -122,12 +122,10 @@ function buildEmployersCard(answers) {
   return { key: 'employers', title: 'Military-Friendly Employers Near You', employers };
 }
 
-// Job-seeker scenario only: one tab per job-focus option selected at the
-// "job-focus" question, fixed in question-declaration order. "Finding a job"
-// maps to the existing Employment content, now split into one card per
-// section (see builders above). Resume Builder / Interview Help have no
-// content yet — they render an empty-cards placeholder until that content is
-// built out.
+// Job-seeker scenario only: Employment, Resume Builder, and Interview Help
+// are always available. Employment maps to the existing results content, now
+// split into one card per section; the other tabs mount their dedicated
+// conversational tools in result.js.
 const JOB_FOCUS_TABS = [
   { value: 'find-jobs', key: 'employment', label: 'Employment' },
   { value: 'resume-builder', key: 'resume-builder', label: 'Resume Builder' },
@@ -135,8 +133,7 @@ const JOB_FOCUS_TABS = [
 ];
 
 function buildJobFocusTabs(answers) {
-  const selected = answers['job-focus'] || [];
-  return JOB_FOCUS_TABS.filter((tab) => selected.includes(tab.value)).map((tab) => {
+  return JOB_FOCUS_TABS.map((tab) => {
     if (tab.value === 'find-jobs') {
       const cards = [
         buildMosTranslationCard(answers),
@@ -198,8 +195,8 @@ function buildReferenceNumber(answers) {
 //                   SkillBridge, job listings, employers all stacked in one
 //                   card), built for every scenario except job-seeker, which
 //                   uses jobFocusTabs instead.
-//   jobFocusTabs  - job-seeker scenario only: one tab per job-focus option
-//                   selected, each with its own array of cards (see
+//   jobFocusTabs  - job-seeker scenario only: Employment, Resume Builder,
+//                   and Interview Help tabs, each with its own content (see
 //                   buildJobFocusTabs above). Empty array for every other
 //                   scenario. Benefits, GI Bill, Mental Health, Housing, and
 //                   Family moved to static-content.js and are shown

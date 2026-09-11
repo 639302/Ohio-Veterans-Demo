@@ -323,7 +323,7 @@ function renderSkillbridgeCard(card) {
 
 function renderJobListingsCard(card) {
   const section = document.createElement('div');
-  section.className = 'result-tabpanel__section';
+  section.className = 'result-tabpanel__section result-tabpanel__section--job-listings';
   const heading = document.createElement('h2');
   heading.className = 'result-card__section-title result-card__section-title--primary';
   heading.textContent = card.title;
@@ -359,7 +359,7 @@ function renderJobListingsCard(card) {
 
 function renderEmployersCard(card) {
   const section = document.createElement('div');
-  section.className = 'result-tabpanel__section';
+  section.className = 'result-tabpanel__section result-tabpanel__section--employers';
   const heading = document.createElement('h2');
   heading.className = 'result-card__section-title result-card__section-title--primary';
   heading.textContent = card.title;

@@ -79,6 +79,10 @@ export function mountFlowChat(container, flow) {
     transcriptEl.scrollTop = transcriptEl.scrollHeight;
   }
 
+  function isQuestionOnly(text) {
+    return /^(what|which|where|when|why|how|do|does|did|is|are|was|were|have|has|can|could|would|will|tell me|please describe|please upload)\b/i.test(text.trim());
+  }
+
   function renderAgentBubble(text) {
     const message = document.createElement('div');
     message.className = 'chat-message chat-message--agent';
@@ -95,9 +99,25 @@ export function mountFlowChat(container, flow) {
     const author = document.createElement('span');
     author.className = 'chat-message__author';
     author.textContent = 'The Navigator';
+    const badge = document.createElement('span');
+    badge.className = 'chat-message__ai-badge';
+    badge.textContent = 'AI-powered response';
+    author.appendChild(badge);
     const body = document.createElement('span');
     body.textContent = text;
     bubble.append(author, body);
+
+    if (!isQuestionOnly(text)) {
+      const actions = document.createElement('div');
+      actions.className = 'chat-message__actions';
+      const verifyLink = document.createElement('a');
+      verifyLink.href = 'https://www.va.gov/';
+      verifyLink.target = '_blank';
+      verifyLink.rel = 'noopener noreferrer';
+      verifyLink.textContent = 'Verify on VA.gov';
+      actions.appendChild(verifyLink);
+      bubble.appendChild(actions);
+    }
 
     message.append(avatar, bubble);
     transcriptEl.appendChild(message);

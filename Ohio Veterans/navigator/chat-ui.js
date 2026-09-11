@@ -25,9 +25,104 @@ export function createChatUI(transcriptEl) {
     const author = document.createElement('span');
     author.className = 'chat-message__author';
     author.textContent = 'The Navigator';
+    const badge = document.createElement('span');
+    badge.className = 'chat-message__ai-badge';
+    badge.textContent = 'AI-powered response';
+    author.appendChild(badge);
     const body = document.createElement('span');
     body.textContent = text;
-    bubble.append(author, body);
+    const actions = document.createElement('div');
+    actions.className = 'chat-message__actions';
+    const reportButton = document.createElement('button');
+    reportButton.type = 'button';
+    reportButton.className = 'chat-message__report-button';
+    reportButton.textContent = 'Report a problem';
+    reportButton.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('navigator-report-ai-response'));
+    });
+    if (shouldShowVerifyLink(text)) {
+      const verifyLink = document.createElement('a');
+      verifyLink.href = 'https://www.va.gov/';
+      verifyLink.target = '_blank';
+      verifyLink.rel = 'noopener noreferrer';
+      verifyLink.textContent = 'Verify on VA.gov';
+      actions.appendChild(verifyLink);
+    }
+    actions.appendChild(reportButton);
+    bubble.append(author, body, actions);
+
+    message.append(avatar, bubble);
+    transcriptEl.appendChild(message);
+    scrollTranscriptToBottom();
+    return message;
+  }
+
+  function shouldShowVerifyLink(text) {
+    return !isQuestionOnly(text) && !isIntroTransition(text);
+  }
+
+  function isQuestionOnly(text) {
+    const normalized = text.trim();
+    return /^(what|which|where|when|why|how|do|does|did|is|are|was|were|have|has|can|could|would|will|tell me|please describe|please upload)\b/i.test(normalized);
+  }
+
+  function isIntroTransition(text) {
+    return /^I understand you want to\b/i.test(text.trim());
+  }
+
+  function appendDisclosureMessage() {
+    const message = document.createElement('div');
+    message.className = 'chat-message chat-message--agent';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'chat-avatar';
+    const icon = document.createElement('mms-icon');
+    icon.setAttribute('name', 'robot');
+    icon.setAttribute('size', 'sm');
+    avatar.appendChild(icon);
+
+    const bubble = document.createElement('section');
+    bubble.className = 'chat-message__bubble chat-message__bubble--disclosure';
+    bubble.setAttribute('aria-labelledby', 'chat-disclosure-heading');
+
+    const author = document.createElement('span');
+    author.className = 'chat-message__author';
+    author.textContent = 'The Navigator';
+    const heading = document.createElement('h2');
+    heading.id = 'chat-disclosure-heading';
+    heading.className = 'chat-disclosure__heading';
+    heading.textContent = 'Before you start';
+
+    const paragraphs = [
+      ['You are using an AI-powered tool, not chatting with a person.', ' The Navigator is operated by the Ohio Department of Veterans Services (ODVS), which is separate from the U.S. Department of Veterans Affairs (VA).'],
+      ['It can suggest information and next steps, but it cannot make VA or ODVS decisions, determine eligibility, provide legal or medical advice, or submit a claim. Important information may be incomplete or incorrect—verify it with an official source or a Veterans Service Officer.'],
+      ['Do not enter', ' a Social Security number, VA claim number, medical details, financial-account information, passwords, or other sensitive personal information. This prototype does not store or send your chat information to VA systems.'],
+    ];
+
+    paragraphs.forEach(([emphasis, text], index) => {
+      const paragraph = document.createElement('p');
+      if (index === 0 || index === 2) {
+        const strong = document.createElement('strong');
+        strong.textContent = emphasis;
+        paragraph.append(strong, text);
+      } else {
+        paragraph.textContent = emphasis;
+      }
+      bubble.appendChild(paragraph);
+    });
+
+    const resources = document.createElement('p');
+    const cvsoLink = document.createElement('a');
+    cvsoLink.href = 'https://dvs.ohio.gov/resources-for-veterans/find-your-cvso';
+    cvsoLink.target = '_blank';
+    cvsoLink.rel = 'noopener noreferrer';
+    cvsoLink.textContent = 'Find a County Veterans Service Office';
+    const crisisLink = document.createElement('a');
+    crisisLink.href = 'tel:988';
+    crisisLink.textContent = '988';
+    resources.append(cvsoLink, ' or call ', crisisLink, ', then press 1, for the Veterans Crisis Line.');
+    bubble.prepend(author, heading);
+    bubble.appendChild(resources);
 
     message.append(avatar, bubble);
     transcriptEl.appendChild(message);
@@ -94,6 +189,7 @@ export function createChatUI(transcriptEl) {
 
   return {
     appendAgentMessage,
+    appendDisclosureMessage,
     appendUserMessage,
     appendCrisisMessage,
     appendTypingIndicator,

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-semantic.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 <script type="importmap">
 {
   "imports": {
@@ -55,6 +55,7 @@
 </script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="gov-banner">
   <button type="button" class="gov-banner__toggle" id="gov-banner-toggle" aria-expanded="false" aria-controls="gov-banner-panel">
     <span>An official State of Ohio site.</span>
@@ -78,7 +79,6 @@
 <header class="nav-header">
   <a href="/Ohio%20Veterans/navigator/" class="nav-header__brand">
     <img src="assets/odvs-logo-horiz-for-taleo.webp" alt="Ohio Department of Veterans Services" class="nav-header__logo">
-    <span class="nav-header__title">The Navigator</span>
   </a>
   <mms-button id="nav-menu-toggle" variant="ghost" color-scheme="primary" icon-only left-icon="list" label="Menu" size="lg" aria-expanded="false" aria-controls="nav-collapsible" aria-haspopup="true"></mms-button>
   <div class="nav-header__collapsible" id="nav-collapsible">
@@ -102,7 +102,7 @@
 </header>
 
 <mms-modal id="login-modal" size="sm" title-text="Login" primary-label="Login" secondary-label="Cancel" color-scheme="primary">
-  <p class="auth-modal-copy">Log in to save your progress and any information you share with us along the way. If you connect your VA account through ID.me or Login.gov, we can use that information to help guide you further.</p>
+  <p class="auth-modal-copy"><strong>Prototype only:</strong> this demo does not connect to VA, ID.me, or Login.gov systems. Do not enter real account credentials or sensitive personal information.</p>
   <form class="auth-modal-form" id="login-form">
     <mms-text-field id="login-email" label="Email" input-type="email" required></mms-text-field>
     <mms-text-field id="login-password" label="Password" input-type="password" required></mms-text-field>
@@ -118,7 +118,7 @@
 </mms-modal>
 
 <mms-modal id="create-account-modal" size="sm" title-text="Create an Account" primary-label="Create Account" secondary-label="Cancel" color-scheme="primary">
-  <p class="auth-modal-copy">Create an account so we can save your progress and any information you share with us along the way. If you connect your VA account through ID.me or Login.gov, we can use that information to help guide you further.</p>
+  <p class="auth-modal-copy"><strong>Prototype only:</strong> this demo does not create a real account or connect to VA, ID.me, or Login.gov systems. Do not enter real account credentials or sensitive personal information.</p>
   <form class="auth-modal-form" id="create-account-form">
     <mms-text-field id="create-account-name" label="Full Name" required></mms-text-field>
     <mms-text-field id="create-account-email" label="Email" input-type="email" required></mms-text-field>
@@ -126,12 +126,12 @@
   </form>
 </mms-modal>
 
-<main class="layout-container">
+<main class="layout-container" id="main-content">
   <div class="landing-layout">
     <div class="landing-content">
       <div class="landing-hero">
         <h1>Find the right benefits, services, and support in Ohio.</h1>
-        <p>Our goal is to help veterans, service members, families, and caregivers get the help they need. Tell us what you're looking for in the search box and our AI chat assistant will connect you with personalized services across Ohio.</p>
+        <p>Use our AI-powered chat tool to find information and suggested next steps for services across Ohio.</p>
       </div>
 
       <div class="landing-form" id="landing-form" hidden>
@@ -178,8 +178,9 @@
 
   <section class="landing-topics" aria-label="Explore common topics">
     <h2>Explore common topics</h2>
+    <p class="landing-topics__subcopy">Prefer to browse instead of chatting? Explore topics below.</p>
     <div class="result-tabs-wrapper" id="landing-tabs-wrapper">
-      <mms-tabs id="landing-tablist" label="Explore common topics"></mms-tabs>
+      <mms-tabs id="landing-tablist" label="Explore common topics" full-width></mms-tabs>
       <div id="landing-tabpanels"></div>
     </div>
   </section>

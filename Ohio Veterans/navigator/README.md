@@ -42,6 +42,23 @@ State (answers, current question index, seeded intent) is kept in
 `sessionStorage` so it survives the full-page navigations between these
 three files, and is scoped to one browser tab/session.
 
+## AI and prototype disclosures
+
+The Navigator is an AI-powered **prototype**, not a live VA or ODVS
+transactional service. Before starting chat, users must acknowledge that:
+
+- the tool is not a person and cannot make eligibility or benefits decisions,
+  provide legal or medical advice, or submit claims;
+- important information must be verified with VA.gov or a County Veterans
+  Service Office;
+- sensitive personal information must not be entered; and
+- the prototype does not connect to VA, ID.me, or Login.gov systems, nor store
+  or transmit chat information to VA systems.
+
+The intake chat keeps this guidance, crisis support, and a human-help route
+visible. AI responses are labeled, link to VA.gov for verification, and offer
+a non-persistent prototype feedback mechanism.
+
 ## Design system usage
 
 All interactive controls default to `@mms/design-system` components

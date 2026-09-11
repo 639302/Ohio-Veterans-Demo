@@ -6,8 +6,8 @@
 // path) or by typed free text, matched via questions.js/county-data.js's
 // keyword matchers.
 
-import { matchOptionsFromText } from './questions.js';
-import { COUNTY_SELECT_OPTIONS, matchCountyFromText } from './county-data.js';
+import { matchOptionsFromText } from './questions.js?v=4';
+import { COUNTY_SELECT_OPTIONS, getCvsoInfo, matchCountyOrZipFromText } from './county-data.js?v=2';
 import {
   getState,
   getCurrentQuestion,
@@ -16,8 +16,8 @@ import {
   goToNext,
   goToPrevious,
   isLastQuestion,
-} from './state.js';
-import { createChatUI, wait, renderOptionList } from './chat-ui.js';
+} from './state.js?v=4';
+import { createChatUI, wait, renderOptionList } from './chat-ui.js?v=4';
 import { startVaBenefitsFlow, isVaBenefitsFlowActive } from './va-benefits-flow.js';
 import { startDisabilityClaimFlow, isDisabilityClaimFlowActive } from './disability-claim-flow.js';
 
@@ -33,6 +33,7 @@ const backButton = document.getElementById('back-button');
 
 const {
   appendAgentMessage,
+  appendDisclosureMessage,
   appendUserMessage,
   appendCrisisMessage,
   appendTypingIndicator,
@@ -46,10 +47,7 @@ let currentCrisisNode = null;
 let disposeOptionList = null;
 let currentOptionsPanel = null;
 
-// Job-seeker and Healthcare-seeker scenarios: gates the first real question
-// behind a Yes/No confirmation of the landing-page request, before any
-// QUESTIONS entry runs.
-let awaitingIntroConfirmation = false;
+let awaitingDisclosureAcknowledgment = false;
 
 // One entry per already-answered question, so Back can rewind exactly one
 // turn: remove that turn's user/crisis messages, restore its agent message
@@ -143,8 +141,11 @@ function renderMultiChips(question, existingValues) {
 }
 
 function renderCountyChips(question, existingValue) {
+  const panel = document.createElement('div');
+  panel.className = 'chat-options';
+
   const select = document.createElement('mms-select');
-  select.placeholder = 'Select a county…';
+  select.placeholder = 'Select a county';
   select.size = 'lg';
   select.options = COUNTY_SELECT_OPTIONS;
   if (existingValue) select.value = existingValue;
@@ -156,7 +157,10 @@ function renderCountyChips(question, existingValue) {
     submitAnswer(question, value, label);
   });
 
-  quickReplies.appendChild(select);
+  panel.appendChild(select);
+  const bubble = currentAgentNode?.querySelector('.chat-message__bubble') || quickReplies;
+  bubble.appendChild(panel);
+  currentOptionsPanel = panel;
 }
 
 const DEFAULT_TEXT_INPUT_PLACEHOLDER = 'Type your answer, or tap an option above';
@@ -188,32 +192,89 @@ function beginTurn(question) {
   renderChipsFor(question, readExistingAnswer(question.id));
 }
 
-function renderYesNoChips() {
+function renderDisclosureChoices() {
   clearQuickReplies();
 
-  const yesButton = document.createElement('mms-button');
-  yesButton.setAttribute('label', 'Yes');
-  yesButton.setAttribute('variant', 'primary');
-  yesButton.setAttribute('color-scheme', 'primary');
-  yesButton.setAttribute('size', 'md');
-  yesButton.addEventListener('click', () => confirmIntroYes());
+  const startButton = document.createElement('mms-button');
+  startButton.setAttribute('label', 'I understand — Start chat');
+  startButton.setAttribute('variant', 'primary');
+  startButton.setAttribute('color-scheme', 'primary');
+  startButton.setAttribute('size', 'md');
+  startButton.addEventListener('click', () => acknowledgeDisclosure());
 
-  const noButton = document.createElement('mms-button');
-  noButton.setAttribute('label', 'No');
-  noButton.setAttribute('variant', 'secondary');
-  noButton.setAttribute('color-scheme', 'primary');
-  noButton.setAttribute('size', 'md');
-  noButton.addEventListener('click', () => confirmIntroNo());
+  const helpButton = document.createElement('mms-button');
+  helpButton.setAttribute('label', 'I need help');
+  helpButton.setAttribute('variant', 'secondary');
+  helpButton.setAttribute('color-scheme', 'primary');
+  helpButton.setAttribute('size', 'md');
+  helpButton.addEventListener('click', () => startHumanHelpFlow());
 
-  quickReplies.append(yesButton, noButton);
+  quickReplies.append(startButton, helpButton);
+  textInput.setAttribute('disabled', '');
+  sendButton.setAttribute('disabled', '');
 }
 
-function confirmIntroYes() {
-  awaitingIntroConfirmation = false;
-  appendUserMessage('Yes');
-  clearQuickReplies();
+function enableTextInput() {
+  textInput.removeAttribute('disabled');
+  sendButton.removeAttribute('disabled');
+}
 
-  if (getState().answers.scenario === 'healthcare-seeker') {
+function acknowledgeDisclosure() {
+  awaitingDisclosureAcknowledgment = false;
+  appendUserMessage('I understand — Start chat');
+  clearQuickReplies();
+  enableTextInput();
+  progressIndicator.hidden = false;
+  startIntake();
+}
+
+function startHumanHelpFlow() {
+  awaitingDisclosureAcknowledgment = false;
+  appendUserMessage('I need help');
+  clearQuickReplies();
+  appendAgentMessage('I can help you connect with a person. Would you like to call or find your County Veterans Service Office representative?');
+
+  const callButton = document.createElement('mms-button');
+  callButton.setAttribute('label', 'Call');
+  callButton.setAttribute('variant', 'primary');
+  callButton.setAttribute('color-scheme', 'primary');
+  callButton.setAttribute('size', 'md');
+  callButton.addEventListener('click', () => {
+    appendUserMessage('Call');
+    clearQuickReplies();
+    appendAgentMessage('Call VA at 800-698-2411 for help. For immediate crisis support, call 988, then press 1.');
+  });
+
+  const findButton = document.createElement('mms-button');
+  findButton.setAttribute('label', 'Find a representative');
+  findButton.setAttribute('variant', 'secondary');
+  findButton.setAttribute('color-scheme', 'primary');
+  findButton.setAttribute('size', 'md');
+  findButton.addEventListener('click', () => {
+    appendUserMessage('Find a representative');
+    clearQuickReplies();
+    appendAgentMessage('What Ohio county do you live in? I can look up your County Veterans Service Office representative.');
+    const select = document.createElement('mms-select');
+    select.placeholder = 'Select a county…';
+    select.size = 'lg';
+    select.options = COUNTY_SELECT_OPTIONS;
+    select.addEventListener('change', (event) => {
+      const value = event.detail?.value ?? select.value;
+      if (!value) return;
+      const label = COUNTY_SELECT_OPTIONS.find((option) => option.value === value)?.label || value;
+      appendUserMessage(label);
+      select.remove();
+      const info = getCvsoInfo(value);
+      appendAgentMessage(`${info.officeName} — ${info.address} — ${info.phone}`);
+    });
+    quickReplies.appendChild(select);
+  });
+
+  quickReplies.append(callButton, findButton);
+}
+
+function startScenarioFlow(scenario) {
+  if (scenario === 'healthcare-seeker') {
     progressIndicator.hidden = true;
     startVaBenefitsFlow({
       transcript,
@@ -225,7 +286,7 @@ function confirmIntroYes() {
     return;
   }
 
-  if (getState().answers.scenario === 'disability-claim-reporter') {
+  if (scenario === 'disability-claim-reporter') {
     progressIndicator.hidden = true;
     startDisabilityClaimFlow({
       transcript,
@@ -241,14 +302,8 @@ function confirmIntroYes() {
   updateProgress();
 }
 
-function confirmIntroNo() {
-  awaitingIntroConfirmation = false;
-  appendUserMessage('No');
-  window.location.href = 'index.html';
-}
-
 const SCENARIO_INTRO_FOLLOWUP = {
-  'job-seeker': 'Let me ask you a few questions to create you a list of jobs tailored to you and your interests.',
+  'job-seeker': 'I can help create you a list of jobs and give you some interview and resume help, but I need to know a little more about you.',
   'healthcare-seeker': 'Let me ask you a few questions to help find the right information.',
   'disability-claim-reporter': 'Let me ask you a few questions to help find the right information.',
 };
@@ -256,9 +311,8 @@ const SCENARIO_INTRO_FOLLOWUP = {
 function beginIntroConfirmation(landingText, scenario) {
   const text = landingText || 'get help';
   const followUp = SCENARIO_INTRO_FOLLOWUP[scenario] || 'Let me ask you a few questions to help find the right information.';
-  appendAgentMessage(`I understand you want to ${text}. ${followUp} Ready to get started?`);
-  awaitingIntroConfirmation = true;
-  renderYesNoChips();
+  appendAgentMessage(`I understand you want to ${text}. ${followUp}`);
+  startScenarioFlow(scenario);
 }
 
 function submitAnswer(question, value, displayText) {
@@ -296,23 +350,10 @@ async function advance() {
 
 function handleTextSubmit() {
   if (isVaBenefitsFlowActive() || isDisabilityClaimFlowActive()) return;
+  if (awaitingDisclosureAcknowledgment) return;
 
   const text = textInput.value.trim();
   if (!text) return;
-
-  if (awaitingIntroConfirmation) {
-    const normalized = text.toLowerCase();
-    textInput.value = '';
-    if (/^(y|yes|yeah|yep|sure|ok|okay)/.test(normalized)) {
-      confirmIntroYes();
-    } else if (/^(n|no|nope|nah)/.test(normalized)) {
-      confirmIntroNo();
-    } else {
-      appendUserMessage(text);
-      appendAgentMessage('I didn\'t quite catch that — you can tap Yes or No above, or type "yes"/"no".');
-    }
-    return;
-  }
 
   const question = getCurrentQuestion();
   if (!question) return;
@@ -323,10 +364,10 @@ function handleTextSubmit() {
   }
 
   if (question.type === 'select') {
-    const match = matchCountyFromText(text);
+    const match = matchCountyOrZipFromText(text);
     if (!match) {
       appendUserMessage(text);
-      appendAgentMessage("I didn't catch a county in that — you can also pick one from the list above.");
+      appendAgentMessage("I didn't catch an Ohio county or ZIP code in that — you can also pick a county from the list above.");
       textInput.value = '';
       return;
     }
@@ -377,6 +418,22 @@ backButton.addEventListener('click', () => {
   updateProgress();
 });
 
+const feedbackModal = document.getElementById('ai-feedback-modal');
+const feedbackText = document.getElementById('ai-feedback-text');
+
+document.addEventListener('navigator-report-ai-response', () => {
+  feedbackModal.open = true;
+});
+
+feedbackModal.addEventListener('primary-click', () => {
+  feedbackText.value = '';
+  feedbackModal.open = false;
+});
+
+feedbackModal.addEventListener('close', () => {
+  feedbackText.value = '';
+});
+
 sendButton.addEventListener('click', () => handleTextSubmit());
 textInput.addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return;
@@ -384,7 +441,7 @@ textInput.addEventListener('keydown', (event) => {
   handleTextSubmit();
 });
 
-function start() {
+function startIntake() {
   const state = getState();
   const question = getCurrentQuestion();
   if (!question) {
@@ -397,6 +454,13 @@ function start() {
   }
   beginTurn(question);
   updateProgress();
+}
+
+function start() {
+  progressIndicator.hidden = true;
+  awaitingDisclosureAcknowledgment = true;
+  appendDisclosureMessage();
+  renderDisclosureChoices();
 }
 
 start();

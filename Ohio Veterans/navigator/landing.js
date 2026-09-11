@@ -58,38 +58,42 @@ renderLandingTabs();
 
 const textForm = document.getElementById('landing-form');
 const scenarioForm = document.getElementById('landing-scenario-form');
-const hasScenario = Boolean(getState().answers.scenario);
 
-if (hasScenario) {
-  scenarioForm.hidden = true;
-  textForm.hidden = false;
+function renderStartForm() {
+  const hasScenario = Boolean(getState().answers.scenario);
 
-  const textInput = document.getElementById('landing-text-input');
-  const submitButton = document.getElementById('landing-submit');
+  if (hasScenario) {
+    scenarioForm.hidden = true;
+    textForm.hidden = false;
 
-  const { landingText } = getState();
-  if (landingText) {
-    textInput.addEventListener('focus', () => {
-      textInput.value = landingText;
-    }, { once: true });
+    const textInput = document.getElementById('landing-text-input');
+    const submitButton = document.getElementById('landing-submit');
+
+    const { landingText } = getState();
+    if (landingText) {
+      textInput.addEventListener('focus', () => {
+        textInput.value = landingText;
+      }, { once: true });
+    }
+
+    function submitFreeText() {
+      const text = textInput.value || '';
+      const guess = matchCategoryFromText(text);
+      const scenario = getState().answers.scenario;
+      resetState();
+      if (scenario) setScenario(scenario);
+      setLandingText(text);
+      setIntent(guess);
+      window.location.href = 'intake.html';
+    }
+
+    submitButton.addEventListener('click', submitFreeText);
+    textInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') submitFreeText();
+    });
+    return;
   }
 
-  function submitFreeText() {
-    const text = textInput.value || '';
-    const guess = matchCategoryFromText(text);
-    const scenario = getState().answers.scenario;
-    resetState();
-    if (scenario) setScenario(scenario);
-    setLandingText(text);
-    setIntent(guess);
-    window.location.href = 'intake.html';
-  }
-
-  submitButton.addEventListener('click', submitFreeText);
-  textInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') submitFreeText();
-  });
-} else {
   textForm.hidden = true;
   scenarioForm.hidden = false;
 
@@ -110,3 +114,5 @@ if (hasScenario) {
 
   scenarioSubmit.addEventListener('click', submitScenario);
 }
+
+renderStartForm();

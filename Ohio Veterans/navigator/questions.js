@@ -223,7 +223,9 @@ export const QUESTIONS = [
   {
     id: 'county',
     type: 'select',
-    prompt: 'What Ohio county do you live in (or plan to live in)?',
+    prompt: (answers) => (answers.scenario === 'job-seeker'
+      ? 'Where in Ohio do you currently live (or plan to live)? You can choose a county or give me your zipcode.'
+      : 'What Ohio county do you live in (or plan to live in)?'),
     // options populated from county-data.js at render time
   },
   {
@@ -235,17 +237,6 @@ export const QUESTIONS = [
     crisisValue: 'mental-health',
     crisisNotice: 'If you are in crisis, the Veterans Crisis Line is available 24/7: call 988, then press 1.',
     conditional: (answers) => answers.scenario !== 'job-seeker',
-  },
-  {
-    id: 'job-focus',
-    type: 'multi',
-    prompt: 'What would you like help with? Choose all that apply.',
-    options: [
-      { value: 'find-jobs', label: 'Finding a job', keywords: ['find a job', 'find jobs', 'finding a job', 'jobs'] },
-      { value: 'resume-builder', label: 'Resume builder', keywords: ['resume', 'resume builder'] },
-      { value: 'interview-help', label: 'Interview help', keywords: ['interview'] },
-    ],
-    conditional: (answers) => answers.scenario === 'job-seeker',
   },
   {
     id: 'industries',

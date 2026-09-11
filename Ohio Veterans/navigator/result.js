@@ -4,11 +4,11 @@
 // from pathway-logic.js. Card DOM-rendering lives in card-renderers.js,
 // shared with landing.js's static topic tabs.
 
-import { getState, resetState, setIntent } from './state.js';
-import { buildPathway } from './pathway-logic.js';
-import { CATEGORIES } from './questions.js';
-import { RENDERERS } from './card-renderers.js?v=2';
-import { mountFlowChat } from './flow-chat.js';
+import { getState, resetState, setIntent, setScenario, setLandingText } from './state.js?v=4';
+import { buildPathway } from './pathway-logic.js?v=2';
+import { CATEGORIES } from './questions.js?v=4';
+import { RENDERERS } from './card-renderers.js?v=3';
+import { mountFlowChat } from './flow-chat.js?v=3';
 import { RESUME_BUILDER_FLOW } from './resume-builder-flow.js';
 import { INTERVIEW_HELP_FLOW } from './interview-help-flow.js';
 
@@ -37,6 +37,25 @@ const employmentGrid = document.getElementById('employment-grid');
 const retryButton = document.getElementById('retry-button');
 
 const CVSO_FALLBACK_PHONE = '(614) 644-0898';
+
+const FOLLOWUP_QUESTIONS = [
+  {
+    label: 'What should I bring to my CVSO?',
+    action: 'cvso',
+  },
+  {
+    label: 'Help with a job interview',
+    action: 'interview',
+  },
+  {
+    label: 'Help with healthcare benefits',
+    action: 'healthcare',
+  },
+  {
+    label: 'Filing a disability claim',
+    action: 'disability',
+  },
+];
 
 function showError() {
   loadingScreen.hidden = true;
@@ -83,10 +102,229 @@ function showEmptyState() {
   emptyHeading.focus();
 }
 
-// Job-seeker scenario's per-job-focus tabs, one tab per selected option
-// (Employment, Resume Builder, Interview Help). Mirrors landing.js's static
-// topic-tab pattern (renderLandingTabs), adapted so each panel holds a list
-// of cards instead of exactly one.
+function startGuidedScenario({ scenario, intent, landingText }) {
+  resetState();
+  setIntent(intent);
+  setScenario(scenario);
+  setLandingText(landingText);
+  window.location.href = 'intake.html';
+}
+
+function createFollowupMessage(text, type = 'agent') {
+  const message = document.createElement('div');
+  message.className = `pathway-followup-chat__message pathway-followup-chat__message--${type}`;
+  message.textContent = text;
+  return message;
+}
+
+function scrollFollowupChatToBottom(chatLog) {
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function renderClaimOffer(container) {
+  const offer = createFollowupMessage(
+    "I can help you submit a claim today if you don't want to visit your CVSO. Would you like help with that today?"
+  );
+
+  const actions = document.createElement('div');
+  actions.className = 'pathway-followup-chat__actions';
+
+  const yesButton = document.createElement('mms-button');
+  yesButton.setAttribute('label', 'Yes');
+  yesButton.setAttribute('variant', 'primary');
+  yesButton.setAttribute('color-scheme', 'primary');
+  yesButton.setAttribute('size', 'md');
+  yesButton.addEventListener('click', () => {
+    startGuidedScenario({
+      scenario: 'disability-claim-reporter',
+      intent: 'benefits',
+      landingText: 'I need help submitting a disability claim',
+    });
+  });
+
+  const noButton = document.createElement('mms-button');
+  noButton.setAttribute('label', 'No');
+  noButton.setAttribute('variant', 'secondary');
+  noButton.setAttribute('color-scheme', 'primary');
+  noButton.setAttribute('size', 'md');
+  noButton.addEventListener('click', () => {
+    container.appendChild(createFollowupMessage('No', 'user'));
+    container.appendChild(createFollowupMessage('Okay. You can still contact your CVSO when you are ready.'));
+  });
+
+  actions.append(yesButton, noButton);
+  offer.appendChild(actions);
+  container.appendChild(offer);
+}
+
+function renderCvsoBringResponse(container) {
+  const intro = createFollowupMessage(
+    "When meeting with your County Veterans Service Officer (CVSO) to file a VA disability claim, it's helpful to bring the following items:"
+  );
+  const list = document.createElement('ul');
+  [
+    'Medical records and hospital records related to your claimed condition or showing your disability has gotten worse',
+    'Private medical records and hospital reports showing the same',
+    'Supporting statements from family, friends, clergy, law enforcement, or people you served with explaining your condition and its impact',
+    'Your discharge papers (DD214 or other separation documents)',
+    'Any service treatment records you have',
+  ].forEach((item) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    list.appendChild(li);
+  });
+  const closing = document.createElement('p');
+  closing.textContent = 'Having these documents ready can help process your claim more quickly. For more details on what evidence you may need.';
+  intro.append(list, closing);
+  container.appendChild(intro);
+  renderClaimOffer(container);
+}
+
+function handleFollowupAction(action, label, chatLog) {
+  chatLog.appendChild(createFollowupMessage(label, 'user'));
+
+  if (action === 'cvso') {
+    renderCvsoBringResponse(chatLog);
+  } else if (action === 'interview') {
+    chatLog.appendChild(createFollowupMessage('Try the Interview Help tab for answers tailored to your job position.'));
+  } else if (action === 'healthcare') {
+    startGuidedScenario({
+      scenario: 'healthcare-seeker',
+      intent: 'healthcare',
+      landingText: 'I need help getting healthcare',
+    });
+  } else if (action === 'disability') {
+    startGuidedScenario({
+      scenario: 'disability-claim-reporter',
+      intent: 'benefits',
+      landingText: 'I need help submitting a disability claim',
+    });
+  }
+
+  scrollFollowupChatToBottom(chatLog);
+}
+
+function inferFollowupAction(text) {
+  const normalized = text.toLowerCase();
+  if (/\b(cvso|county veterans|bring|document|dd214|discharge|records|evidence)\b/.test(normalized)) return 'cvso';
+  if (/\b(interview|resume|job|position|prepare)\b/.test(normalized)) return 'interview';
+  if (/\b(healthcare|health care|medical|enroll|clinic)\b/.test(normalized)) return 'healthcare';
+  if (/\b(disability|claim|file|compensation)\b/.test(normalized)) return 'disability';
+  return null;
+}
+
+function handleFollowupText(textInput, chatLog) {
+  const text = textInput.value.trim();
+  if (!text) return;
+
+  const action = inferFollowupAction(text);
+  if (action) {
+    handleFollowupAction(action, text, chatLog);
+  } else {
+    chatLog.appendChild(createFollowupMessage(text, 'user'));
+    chatLog.appendChild(createFollowupMessage(
+      'I can help explain your pathway, point you to next steps, or guide you through another process. Try one of the quick questions below, or contact your CVSO for official guidance.'
+    ));
+    scrollFollowupChatToBottom(chatLog);
+  }
+
+  textInput.value = '';
+}
+
+function renderFollowupCard() {
+  const card = document.createElement('mms-card');
+  card.className = 'pathway-followup-card';
+  card.setAttribute('variant', 'accent-left');
+  card.setAttribute('color-scheme', 'primary');
+  card.setAttribute('roundness', 'subtle');
+  card.setAttribute('surface', 'tint');
+  card.setAttribute('title-text', 'Do you need more help?');
+  card.setAttribute('icon', 'chat-circle-text');
+
+  const body = document.createElement('div');
+  body.className = 'pathway-followup-card__body';
+  body.setAttribute('slot', 'body-content');
+
+  const expandButton = document.createElement('mms-button');
+  expandButton.className = 'pathway-followup-card__expand-button';
+  expandButton.setAttribute('label', 'Expand chat');
+  expandButton.setAttribute('variant', 'ghost');
+  expandButton.setAttribute('color-scheme', 'primary');
+  expandButton.setAttribute('size', 'md');
+  expandButton.setAttribute('aria-expanded', 'false');
+
+  const intro = document.createElement('p');
+  intro.textContent = 'Have another question, The Navigator can help explain these suggestions, point you to next steps, or guide you through another process. It cannot make decisions, determine eligibility, provide legal or medical advice.';
+
+  const inputForm = document.createElement('form');
+  inputForm.className = 'chat-input-row pathway-followup-card__input-form';
+
+  const inputLabel = document.createElement('label');
+  inputLabel.className = 'visually-hidden';
+  inputLabel.setAttribute('for', 'pathway-followup-input');
+  inputLabel.textContent = 'Ask a question about your pathway';
+
+  const textInput = document.createElement('mms-text-field');
+  textInput.id = 'pathway-followup-input';
+  textInput.setAttribute('placeholder', 'Ask a question about your pathway');
+  textInput.setAttribute('size', 'lg');
+
+  const askButton = document.createElement('mms-button');
+  askButton.setAttribute('label', 'Send');
+  askButton.setAttribute('icon-only', '');
+  askButton.setAttribute('left-icon', 'paper-plane-right');
+  askButton.setAttribute('variant', 'primary');
+  askButton.setAttribute('color-scheme', 'primary');
+  askButton.setAttribute('size', 'lg');
+
+  inputForm.append(inputLabel, textInput, askButton);
+
+  const quickHeading = document.createElement('p');
+  quickHeading.className = 'pathway-followup-card__quick-heading';
+  quickHeading.textContent = 'Quick questions:';
+
+  const quickList = document.createElement('div');
+  quickList.className = 'pathway-followup-card__quick-list';
+
+  const chatLog = document.createElement('div');
+  chatLog.className = 'pathway-followup-chat';
+  chatLog.setAttribute('aria-live', 'polite');
+
+  expandButton.addEventListener('click', () => {
+    const expanded = card.classList.toggle('is-expanded');
+    expandButton.setAttribute('label', expanded ? 'Minimize chat' : 'Expand chat');
+    expandButton.setAttribute('aria-expanded', String(expanded));
+    document.body.classList.toggle('has-pathway-followup-sheet', expanded);
+    if (expanded) textInput.focus();
+  });
+
+  inputForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    handleFollowupText(textInput, chatLog);
+  });
+
+  askButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    handleFollowupText(textInput, chatLog);
+  });
+
+  FOLLOWUP_QUESTIONS.forEach((question) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pathway-followup-card__quick-button';
+    button.textContent = question.label;
+    button.addEventListener('click', () => handleFollowupAction(question.action, question.label, chatLog));
+    quickList.appendChild(button);
+  });
+
+  body.append(expandButton, intro, inputForm, quickHeading, quickList, chatLog);
+  card.appendChild(body);
+  return card;
+}
+
+// Job-seeker scenario's Employment, Resume Builder, and Interview Help tabs.
+// Mirrors landing.js's static topic-tab pattern (renderLandingTabs), adapted
+// so each panel holds a list of cards instead of exactly one.
 const TAB_ICONS = {
   employment: 'briefcase',
   'resume-builder': 'file-text',
@@ -147,6 +385,7 @@ function showResults(answers) {
     const renderer = RENDERERS[card.key];
     if (renderer) persistentGrid.appendChild(renderer(card));
   });
+  persistentGrid.appendChild(renderFollowupCard());
   if (jobFocusTabs.length) {
     employmentGrid.hidden = true;
     resultTabsWrapper.hidden = false;

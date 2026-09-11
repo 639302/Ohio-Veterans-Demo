@@ -4,7 +4,7 @@
 // persisted to sessionStorage so it survives full page navigations within
 // one browser tab/session, and is cleared on kiosk reset / Retry.
 
-import { QUESTIONS } from './questions.js';
+import { QUESTIONS } from './questions.js?v=4';
 import { logOut } from './auth.js';
 
 const STORAGE_KEY = 'navigator-state-v1';
