@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About Us | The Navigator | Ohio Department of Veterans Services</title>
+<title>Your Employment results | The Navigator | Ohio Department of Veterans Services</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -26,23 +26,43 @@
     "@lit/reactive-element/": "../../node_modules/@lit/reactive-element/",
     "@lit-labs/ssr-dom-shim": "../../node_modules/@lit-labs/ssr-dom-shim/index.js",
     "@lit-labs/ssr-dom-shim/": "../../node_modules/@lit-labs/ssr-dom-shim/",
+    "@mms/design-system/components/mms-breadcrumbs": "../../node_modules/@mms/design-system/dist/components/breadcrumbs/mms-breadcrumbs.component.js",
     "@mms/design-system/components/mms-button": "../../node_modules/@mms/design-system/dist/components/button/mms-button.component.js",
+    "@mms/design-system/components/mms-card": "../../node_modules/@mms/design-system/dist/components/card/mms-card.component.js",
+    "@mms/design-system/components/mms-checkbox": "../../node_modules/@mms/design-system/dist/components/checkbox/mms-checkbox.component.js",
+    "@mms/design-system/components/mms-checkbox-group": "../../node_modules/@mms/design-system/dist/components/checkbox-group/mms-checkbox-group.component.js",
+    "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
     "@mms/design-system/components/mms-header": "../../node_modules/@mms/design-system/dist/components/header/mms-header.component.js",
     "@mms/design-system/components/mms-icon": "../../node_modules/@mms/design-system/dist/components/icon/mms-icon.component.js",
-    "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
+    "@mms/design-system/components/mms-inline-alert": "../../node_modules/@mms/design-system/dist/components/inline-alert/mms-inline-alert.component.js",
     "@mms/design-system/components/mms-modal": "../../node_modules/@mms/design-system/dist/components/modal/mms-modal.component.js",
+    "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-radio-group": "../../node_modules/@mms/design-system/dist/components/radio-group/mms-radio-group.component.js",
+    "@mms/design-system/components/mms-select": "../../node_modules/@mms/design-system/dist/components/select/mms-select.component.js",
     "@mms/design-system/components/mms-text-field": "../../node_modules/@mms/design-system/dist/components/text-field/mms-text-field.component.js",
     "/node_modules/@mms/design-system/dist/icons/icon-svgs.json": "/Ohio%20Veterans/navigator/icon-svgs-shim.js"
   }
 }
 </script>
 <script type="module">
+  import '@mms/design-system/components/mms-breadcrumbs';
   import '@mms/design-system/components/mms-button';
+  import '@mms/design-system/components/mms-card';
+  import '@mms/design-system/components/mms-checkbox';
+  import '@mms/design-system/components/mms-checkbox-group';
+  import '@mms/design-system/components/mms-link';
   import '@mms/design-system/components/mms-header';
   import '@mms/design-system/components/mms-icon';
-  import '@mms/design-system/components/mms-link';
+  import '@mms/design-system/components/mms-inline-alert';
   import '@mms/design-system/components/mms-modal';
+  import '@mms/design-system/components/mms-radio';
+  import '@mms/design-system/components/mms-radio-group';
+  import '@mms/design-system/components/mms-select';
   import '@mms/design-system/components/mms-text-field';
+  // dismissible defaults to true on mms-inline-alert; these are persistent
+  // AI-disclosure notices, not attribute-settable to false (Boolean attr),
+  // so clear the property directly once the DOM is ready.
+  document.querySelectorAll('.chat-safety-panel mms-inline-alert, .result-guidance-alert').forEach((el) => { el.dismissible = false; });
 </script>
 </head>
 <body>
@@ -128,34 +148,77 @@
   </form>
 </mms-modal>
 
+<mms-modal id="ai-feedback-modal" size="sm" title-text="Report a problem with this AI response" primary-label="Send feedback" secondary-label="Cancel" color-scheme="primary">
+  <p class="auth-modal-copy">Thank you for helping us improve. In this prototype, feedback is not sent or stored. Do not include personal, medical, or claim information.</p>
+  <mms-text-field id="ai-feedback-text" label="What was inaccurate, unclear, or unsafe?" input-type="text"></mms-text-field>
+</mms-modal>
+
 <main class="layout-container" id="main-content">
-  <div class="about-hero">
-    <h1>About Us</h1>
+  <div class="page-breadcrumbs-wrapper">
+    <mms-breadcrumbs id="page-breadcrumbs" size="md"></mms-breadcrumbs>
   </div>
 
-  <div class="about-layout">
-    <div class="about-content">
-      <div class="about-section">
-        <h2>What We Do</h2>
-        <p>The Ohio Department of Veterans Services (ODVS) helps Ohio's veterans, service members, and their families get the benefits and support they've earned.</p>
-        <p>We train and oversee the 88 County Veterans Service Offices that work directly with veterans across the state, coordinate with the U.S. Department of Veterans Affairs on benefits, and operate two Ohio Veterans Homes in Sandusky and Georgetown. We also manage GI Bill approvals through the State Approving Agency, maintain more than 1.9 million veterans' service records dating back to World War II, and advocate for veterans at the state and federal level.</p>
-        <p>ODVS is a state agency, separate from the federal VA — so we don't make benefit decisions or give legal advice ourselves. That's exactly what your County Veterans Service Office is for, and it's exactly why we built the Navigator: to connect you with the right office and the right next step, without the runaround.</p>
-        <mms-button id="about-cta" label="Start Your Pathway" variant="primary" color-scheme="primary" size="lg"></mms-button>
-      </div>
+  <div class="loading-screen" id="loading-screen" aria-live="polite">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <p>Building your employment results…</p>
+  </div>
 
-      <div class="about-section">
-        <h2>How We Built This</h2>
-        <p>The Navigator uses AI to suggest information and next steps using ODVS and VA program sources. It is a starting point, not a final decision, and individual responses are not reviewed by a person before you see them. AI-generated responses are labeled so you always know what you are reading.</p>
-        <p>The Navigator cannot make VA or ODVS decisions, determine eligibility, give legal or medical advice, or submit a claim. Verify important information with an official source or your County Veterans Service Office, and do not enter sensitive personal information in the chat.</p>
-        <p>We test the Navigator with veterans, families, and people who use assistive technology, and we design every screen to work with a keyboard or a screen reader — not just a mouse.</p>
-      </div>
-    </div>
+  <div id="error-screen" class="error-state" hidden>
+    <h1 tabindex="-1" id="error-heading">We're having trouble putting together your results.</h1>
+    <p id="error-body"></p>
+    <mms-button id="retry-button" label="Try again" variant="primary" color-scheme="primary" size="lg"></mms-button>
+  </div>
 
-    <div class="about-image" aria-hidden="true">
-      <img src="assets/AdobeStock_500856283.jpeg" alt="" class="about-image__img">
+  <div id="empty-screen" class="empty-state" hidden>
+    <div class="landing-hero">
+      <h1 tabindex="-1" id="empty-heading">Your Employment results</h1>
+      <p>To help generate employment results for you, tell us what you're looking for or start with The Navigator.</p>
     </div>
+    <div class="category-grid" id="empty-category-grid" role="list"></div>
+  </div>
+
+  <div id="results-screen" hidden>
+    <h1 tabindex="-1" id="results-heading">Your Employment results</h1>
+    <div class="result-grid result-grid--persistent" id="persistent-grid">
+      <mms-inline-alert class="result-guidance-alert" alert-type="informational" summary="AI-generated guidance:" message="This employment pathway is a suggestion based on what you told us. It is not an official benefits determination and may be incomplete or incorrect. Verify important information with OhioMeansJobs, VA.gov, or your County Veterans Service Office."></mms-inline-alert>
+    </div>
+    <div class="result-grid" id="employment-grid"></div>
   </div>
 </main>
+
+<div class="chat-drawer-backdrop" id="chat-drawer-backdrop"></div>
+<section class="chat-drawer" id="chat-drawer" aria-label="The Navigator Chat">
+  <div class="chat-drawer__header">
+    <div class="chat-drawer__header-left">
+      <div class="chat-drawer__avatar" aria-hidden="true">
+        <mms-icon name="magic-wand" size="md"></mms-icon>
+      </div>
+      <div class="chat-drawer__header-text">
+        <h2 class="chat-drawer__title">The Navigator</h2>
+        <span class="chat-drawer__badge">AI-assisted veteran navigator</span>
+      </div>
+    </div>
+    <div class="chat-drawer__header-actions">
+      <mms-button id="chat-drawer-close" label="Close" icon-only left-icon="x" variant="ghost" color-scheme="onyx" size="md"></mms-button>
+    </div>
+  </div>
+  <div class="chat-drawer__body">
+    <div class="chat-transcript" id="chat-transcript" role="log" aria-live="polite"></div>
+    <div class="chat-quick-replies" id="chat-quick-replies" hidden></div>
+    <div class="chat-drawer__need-help" id="chat-drawer-need-help">
+      <mms-button id="chat-drawer-need-help-btn" label="Need help?" variant="ghost" color-scheme="primary" size="sm" left-icon="question"></mms-button>
+    </div>
+    <div class="chat-input-row">
+      <label class="visually-hidden" for="chat-text-input">Type your answer</label>
+      <mms-text-field id="chat-text-input" placeholder="Type your answer, or tap an option above" size="lg"></mms-text-field>
+      <mms-button id="chat-send-button" label="Send" icon-only left-icon="paper-plane-right" variant="primary" color-scheme="primary" size="lg"></mms-button>
+    </div>
+    <div class="chat-safety-panel" aria-label="AI chat safety information">
+      <mms-inline-alert alert-type="caution" summary="AI-powered tool—not a person." message="It cannot make decisions, determine eligibility, provide legal or medical advice."></mms-inline-alert>
+      <mms-inline-alert alert-type="caution" summary="In crisis, call 988, then press 1." message="Do not share sensitive personal information." action action-text="Talk to a Veterans Service Officer" action-href="https://dvs.ohio.gov/resources-for-veterans/find-your-cvso"></mms-inline-alert>
+    </div>
+  </div>
+</section>
 
 <mms-button
   class="navigator-launcher"
@@ -168,11 +231,6 @@
   label="The Navigator"
 ></mms-button>
 
-<script type="module" src="nav.js?v=17"></script>
-<script type="module">
-  document.getElementById('about-cta').addEventListener('click', () => {
-    window.location.href = 'index.html';
-  });
-</script>
+<script type="module" src="result.js?v=34"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@
 // and a downloadable text report — all fabricated demo data, see
 // stakeholder-data.js).
 
+import './session-reset.js?v=1';
 import { isStakeholder, logOut } from './auth.js';
 import { KPI_STATS, COUNTY_ENGAGEMENT, COHORT_BREAKDOWN, ENGAGEMENT_TREND } from './stakeholder-data.js';
 import { getCvsoInfo } from './county-data.js';

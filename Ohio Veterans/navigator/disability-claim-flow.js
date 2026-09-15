@@ -15,12 +15,12 @@ import {
   AGREEMENT_CONTENT,
   WHAT_TO_EXPECT_CONTENT,
   GET_HELP_TEXT,
-} from './disability-claim-data.js';
-import { COUNTY_SELECT_OPTIONS, getCvsoInfo } from './county-data.js';
-import { setAnswer } from './state.js';
-import { createChatUI, wait } from './chat-ui.js?v=2';
-import { logIn } from './auth.js';
-import { renderAvatar } from './nav.js';
+} from './disability-claim-data.js?v=6';
+import { COUNTY_SELECT_OPTIONS, getCvsoInfo } from './county-data.js?v=6';
+import { getState, setAnswer } from './state.js?v=6';
+import { createChatUI, wait } from './chat-ui.js?v=10';
+import { logIn } from './auth.js?v=6';
+import { renderAvatar } from './nav.js?v=17';
 
 const DEFAULT_PLACEHOLDER = 'Type your answer, or tap an option above';
 
@@ -48,9 +48,23 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
   let applicationStatus = 'not-started';
 
   let pendingTextHandler = null;
+  let lastAgentNode = null;
+
+  function appendAgentMsg(text) {
+    lastAgentNode = appendAgentMessage(text);
+    return lastAgentNode;
+  }
+
+  function appendAgentMsgMultiline(text) {
+    const node = appendAgentMessage(text);
+    const span = node.querySelector('.chat-message__bubble > span:last-child');
+    if (span) span.style.whiteSpace = 'pre-line';
+    lastAgentNode = node;
+    return node;
+  }
 
   function clearQuickReplies() {
-    quickReplies.innerHTML = '';
+    if (quickReplies) quickReplies.innerHTML = '';
   }
 
   function showTextInput(placeholder, onSubmit) {
@@ -84,64 +98,82 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
     handleTextSubmit();
   });
 
-  function addButton(label, variant, onClick) {
+  function addButton(label, variant, onClick, targetNode = lastAgentNode) {
+    const bubble = targetNode?.querySelector('.chat-message__bubble') || quickReplies;
+    let group = bubble.querySelector('.chat-message__button-group');
+    if (!group) {
+      group = document.createElement('div');
+      group.className = 'chat-message__button-group';
+      const actions = bubble.querySelector('.chat-message__actions');
+      if (actions) {
+        bubble.insertBefore(group, actions);
+      } else {
+        bubble.appendChild(group);
+      }
+    }
     const button = document.createElement('mms-button');
     button.setAttribute('label', label);
     button.setAttribute('variant', variant || 'secondary');
     button.setAttribute('color-scheme', 'primary');
-    button.setAttribute('size', 'md');
-    button.addEventListener('click', onClick);
-    quickReplies.appendChild(button);
+    button.setAttribute('size', 'sm');
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      onClick();
+    });
+    group.appendChild(button);
+    scrollTranscriptToBottom();
     return button;
   }
 
-  function renderYesNo(onYes, onNo) {
+  function renderYesNo(onYes, onNo, targetNode = lastAgentNode) {
     addButton('Yes', 'primary', () => {
       appendUserMessage('Yes');
       clearQuickReplies();
       onYes();
-    });
+    }, targetNode);
     addButton('No', 'secondary', () => {
       appendUserMessage('No');
       clearQuickReplies();
       onNo();
-    });
+    }, targetNode);
   }
 
   // "Any other disability?" — Yes is visually present but inert per the
   // spec's explicit "only allow them to select no."
-  function renderYesDisabledNo(onNo) {
+  function renderYesDisabledNo(onNo, targetNode = lastAgentNode) {
+    const bubble = targetNode?.querySelector('.chat-message__bubble') || quickReplies;
+    let group = bubble.querySelector('.chat-message__button-group');
+    if (!group) {
+      group = document.createElement('div');
+      group.className = 'chat-message__button-group';
+      const actions = bubble.querySelector('.chat-message__actions');
+      if (actions) {
+        bubble.insertBefore(group, actions);
+      } else {
+        bubble.appendChild(group);
+      }
+    }
     const yesButton = document.createElement('mms-button');
     yesButton.setAttribute('label', 'Yes');
     yesButton.setAttribute('variant', 'primary');
     yesButton.setAttribute('color-scheme', 'primary');
-    yesButton.setAttribute('size', 'md');
+    yesButton.setAttribute('size', 'sm');
     yesButton.setAttribute('aria-disabled', 'true');
     yesButton.toggleAttribute('disabled', true);
-    quickReplies.appendChild(yesButton);
+    group.appendChild(yesButton);
 
-    addButton('No', 'secondary', () => {
+    const noButton = document.createElement('mms-button');
+    noButton.setAttribute('label', 'No');
+    noButton.setAttribute('variant', 'secondary');
+    noButton.setAttribute('color-scheme', 'primary');
+    noButton.setAttribute('size', 'sm');
+    noButton.addEventListener('click', () => {
       appendUserMessage('No');
       clearQuickReplies();
       onNo();
     });
-  }
-
-  function addGetHelpButton() {
-    const button = document.createElement('mms-button');
-    button.setAttribute('label', 'Need help?');
-    button.setAttribute('variant', 'ghost');
-    button.setAttribute('color-scheme', 'primary');
-    button.setAttribute('size', 'md');
-    button.addEventListener('click', () => openGetHelp());
-    quickReplies.appendChild(button);
-  }
-
-  function appendAgentMessageMultiline(text) {
-    const node = appendAgentMessage(text);
-    const span = node.querySelector('.chat-message__bubble > span:last-child');
-    if (span) span.style.whiteSpace = 'pre-line';
-    return node;
+    group.appendChild(noButton);
+    scrollTranscriptToBottom();
   }
 
   let currentScreenId = null;
@@ -153,21 +185,13 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
     clearQuickReplies();
     hideTextInput();
     SCREENS[screenId](currentScreenArgs);
-    // Some screens (e.g. renderFirstClaimMessageScreen) chain straight into
-    // the next screen via a nested renderScreen(...) call instead of waiting
-    // for a button click. That nested call already added its own Get Help
-    // button, so skip adding a second one here unless this call is still the
-    // innermost/current screen.
-    if (currentScreenId === screenId) {
-      addGetHelpButton();
-    }
   }
 
   // --- Get Help (reachable from every screen) ---------------------------
 
   function openGetHelp() {
     appendUserMessage('Need help?');
-    appendAgentMessage(GET_HELP_TEXT);
+    appendAgentMsg(GET_HELP_TEXT);
     clearQuickReplies();
     hideTextInput();
     addButton('Call', 'primary', () => {
@@ -186,16 +210,20 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
     const typing = appendTypingIndicator();
     await wait(1000);
     typing.remove();
-    appendAgentMessage('Calling MyVA411 from your computer…');
+    appendAgentMsg('Calling MyVA411 from your computer…');
     const typing2 = appendTypingIndicator();
     await wait(1200);
     typing2.remove();
-    appendAgentMessage("You're connected — a live representative will be with you shortly.");
+    appendAgentMsg("You're connected — a live representative will be with you shortly.");
     renderScreen(currentScreenId, currentScreenArgs);
   }
 
   function runFindRepresentative() {
-    appendAgentMessage('What Ohio county do you live in? I can look up your local accredited representative.');
+    const msg = appendAgentMsg('What Ohio county do you live in? I can look up your local accredited representative.');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a county…';
     select.size = 'lg';
@@ -207,7 +235,7 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       appendUserMessage(label);
       clearQuickReplies();
       const info = getCvsoInfo(value);
-      appendAgentMessage(`${info.officeName} — ${info.address} — ${info.phone}`);
+      appendAgentMsg(`${info.officeName} — ${info.address} — ${info.phone}`);
       hideTextInput();
       addButton('Continue', 'primary', () => {
         appendUserMessage('Continue');
@@ -215,23 +243,29 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
         renderScreen(currentScreenId, currentScreenArgs);
       });
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   // --- Wrap-up (silently records county, then ends the conversation) -----
 
   function closeOutThen(message) {
-    appendAgentMessage(message);
+    appendAgentMsg(message);
     renderScreen('anything-else');
   }
 
   function renderAnythingElseScreen() {
-    appendAgentMessage('Is there anything else I can help you with today?');
+    const msg = appendAgentMsg('Is there anything else I can help you with today?');
     addButton("No, that's all — thank you", 'primary', () => {
       appendUserMessage("No, that's all — thank you");
-      appendAgentMessage('Ok. Have a nice day.');
+      appendAgentMsg('Ok. Have a nice day.');
       ensureCountyThenWrapup();
-    });
+    }, msg);
   }
 
   function ensureCountyThenWrapup() {
@@ -245,7 +279,11 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
   }
 
   function renderFallbackCountyScreen() {
-    appendAgentMessage('What Ohio county do you live in?');
+    const msg = appendAgentMsg('What Ohio county do you live in?');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a county…';
     select.size = 'lg';
@@ -259,21 +297,36 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       clearQuickReplies();
       finish();
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   async function finish() {
-    appendAgentMessage("Got it — let's put together your pathway…");
-    await wait(900);
     active = false;
-    onFinish();
-    window.location.href = 'result.html';
+    const county = getState().answers.county || profile.county || 'Franklin';
+    const info = getCvsoInfo(county);
+    const msg = appendAgentMsg(`Your disability claim information has been recorded. If you need help gathering evidence or filing an appeal, your County Veterans Service Office has accredited representatives ready to assist:\n${info.officeName}\n${info.address || ''}\nPhone: ${info.phone}`);
+    addButton('Find a job', 'primary', () => {
+      document.dispatchEvent(new CustomEvent('navigator-start-flow', { detail: { scenario: 'job-seeker' } }));
+    }, msg);
+    addButton('Find my CVSO', 'secondary', () => {
+      document.dispatchEvent(new CustomEvent('navigator-start-flow', { detail: { scenario: 'cvso' } }));
+    }, msg);
+    addButton('Ask another question', 'ghost', () => {
+      document.dispatchEvent(new CustomEvent('navigator-start-flow', { detail: { scenario: null } }));
+    }, msg);
+    if (onFinish) onFinish();
   }
 
   // --- Claim type / filed-before branch -----------------------------------
 
   function renderClaimTypeQuestionScreen() {
-    appendAgentMessage("Tell me about the type of claim you'd like to file — what condition or disability are you dealing with?");
+    appendAgentMsg("Tell me about the type of claim you'd like to file — what condition or disability are you dealing with?");
     showTextInput('Describe your condition', (text) => {
       appendUserMessage(text);
       claimAnswers.claimType = text;
@@ -282,48 +335,52 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
   }
 
   function renderFiledBeforeQuestionScreen() {
-    appendAgentMessage('Have you filed a claim for disability compensation before?');
+    const msg = appendAgentMsg('Have you filed a claim for disability compensation before?');
     renderYesNo(
       () => { filedBefore = true; renderScreen('existing-claim-message'); },
       () => { filedBefore = false; renderScreen('first-claim-message'); },
+      msg
     );
   }
 
   // --- Existing-claim branch -----------------------------------------------
 
   function renderExistingClaimMessageScreen() {
-    appendAgentMessage("Ok, I understand you want to file a new claim for an existing service-connected disability.");
+    appendAgentMsg("Ok, I understand you want to file a new claim for an existing service-connected disability.");
     renderScreen('evidence-question');
   }
 
   function renderEvidenceQuestionScreen() {
-    appendAgentMessage('Do you have new evidence to support your claim?');
+    const msg = appendAgentMsg('Do you have new evidence to support your claim?');
     renderYesNo(
       () => renderScreen('login'),
       () => renderScreen('no-evidence-message'),
+      msg
     );
   }
 
   function renderNoEvidenceMessageScreen() {
-    appendAgentMessage("You don't have to submit any evidence — we may need to schedule you for a claim exam instead. Do you want to proceed?");
+    const msg = appendAgentMsg("You don't have to submit any evidence — we may need to schedule you for a claim exam instead. Do you want to proceed?");
     renderYesNo(
       () => renderScreen('login'),
       () => closeOutThen('No problem — thanks for stopping by.'),
+      msg
     );
   }
 
   // --- First-claim branch ----------------------------------------------------
 
   function renderFirstClaimMessageScreen() {
-    appendAgentMessage('Ok, I understand you want to file your first claim for disability compensation.');
+    appendAgentMsg('Ok, I understand you want to file your first claim for disability compensation.');
     renderScreen('active-duty-question');
   }
 
   function renderActiveDutyQuestionScreen() {
-    appendAgentMessage('Are you currently on active duty?');
+    const msg = appendAgentMsg('Are you currently on active duty?');
     renderYesNo(
       () => { stillServing = true; renderScreen('bdd-message'); },
       () => { stillServing = false; renderScreen('login'); },
+      msg
     );
   }
 
@@ -361,27 +418,29 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
     message.append(avatar, bubble);
     transcript.appendChild(message);
     scrollTranscriptToBottom();
+    lastAgentNode = message;
 
     renderYesNo(
       () => renderScreen('bdd-eligible-message'),
       () => renderScreen('bdd-ineligible-message'),
+      message
     );
   }
 
   function renderBddEligibleMessageScreen() {
-    appendAgentMessage('Ok great, we will proceed with your claim under the Benefits Delivery at Discharge program.');
+    appendAgentMsg('Ok great, we will proceed with your claim under the Benefits Delivery at Discharge program.');
     renderScreen('login');
   }
 
   function renderBddIneligibleMessageScreen() {
-    appendAgentMessage("You can still submit a standard claim — let's get started.");
+    appendAgentMsg("You can still submit a standard claim — let's get started.");
     renderScreen('login');
   }
 
   // --- Login + profile summary ----------------------------------------------
 
   function renderLoginScreen() {
-    appendAgentMessage("This prototype can show a sample sign-in step, but it does not connect to ID.me or access your VA information.");
+    const msg = appendAgentMsg("To show the benefit of an API integration with ID.me , this prototype can show a sample sign-in step, but it does not connect to ID.me or access actual VA information.");
     addButton('Continue with sample sign-in', 'primary', async () => {
       appendUserMessage('Continue with sample sign-in');
       clearQuickReplies();
@@ -392,7 +451,7 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       logIn(profile.name);
       renderAvatar();
       renderScreen('profile-summary');
-    });
+    }, msg);
   }
 
   function formatProfileSummary() {
@@ -413,17 +472,22 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
   }
 
   function renderProfileSummaryScreen() {
-    appendAgentMessage("Here's what I found on file for you:");
-    appendAgentMessageMultiline(formatProfileSummary());
-    appendAgentMessage('Does this all look correct?');
+    appendAgentMsg("Here's what I found on file for you:");
+    appendAgentMsgMultiline(formatProfileSummary());
+    const msg = appendAgentMsg('Does this all look correct?');
     renderYesNo(
       () => renderScreen('toxic-exposure-question'),
       () => renderScreen('edit-select-field'),
+      msg
     );
   }
 
   function renderEditSelectFieldScreen() {
-    appendAgentMessage('Which field would you like to update?');
+    const msg = appendAgentMsg('Which field would you like to update?');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a field…';
     select.size = 'lg';
@@ -436,11 +500,17 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       clearQuickReplies();
       renderScreen('edit-value', { field });
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   function renderEditValueScreen({ field }) {
-    appendAgentMessage(`What should ${field.label.toLowerCase()} be instead?`);
+    appendAgentMsg(`What should ${field.label.toLowerCase()} be instead?`);
     showTextInput(`Enter new ${field.label.toLowerCase()}`, (text) => {
       appendUserMessage(text);
       profile = { ...profile, [field.key]: text };
@@ -451,16 +521,21 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
   // --- Toxic exposure --------------------------------------------------------
 
   function renderToxicExposureQuestionScreen() {
-    appendAgentMessage('Are you claiming any conditions related to toxic exposure?');
+    const msg = appendAgentMsg('Are you claiming any conditions related to toxic exposure?');
     renderYesNo(
       () => renderScreen('toxic-exposure-checklist'),
       () => renderScreen('other-disability-question'),
+      msg
     );
   }
 
   function renderToxicExposureChecklistScreen() {
-    appendAgentMessage('Which types of toxic exposure apply to you? Choose all that apply.');
+    const msg = appendAgentMsg('Which types of toxic exposure apply to you? Choose all that apply.');
+    const bubble = msg.querySelector('.chat-message__bubble');
     const selection = new Set();
+
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
 
     TOXIC_EXPOSURE_OPTIONS.forEach((option) => {
       const checkbox = document.createElement('mms-checkbox');
@@ -468,12 +543,20 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       checkbox.setAttribute('checked-value', option.value);
       checkbox.setAttribute('color-scheme', 'primary');
       checkbox.addEventListener('change', (event) => {
-        const { checked, value } = event.detail;
-        if (checked) selection.add(value);
-        else selection.delete(value);
+        const checked = event.detail?.checked !== undefined ? event.detail.checked : Boolean(checkbox.checked || checkbox.hasAttribute('checked'));
+        const val = event.detail?.value || checkbox.getAttribute('checked-value') || option.value;
+        if (checked) selection.add(val);
+        else selection.delete(val);
       });
-      quickReplies.appendChild(checkbox);
+      panel.appendChild(checkbox);
     });
+
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
 
     addButton('Continue', 'primary', () => {
       const labels = TOXIC_EXPOSURE_OPTIONS
@@ -483,7 +566,7 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       claimAnswers.toxicExposure = Array.from(selection);
       clearQuickReplies();
       if (selection.has('other')) {
-        appendAgentMessage('Please describe the other toxic exposure.');
+        appendAgentMsg('Please describe the other toxic exposure.');
         showTextInput('Describe the exposure', (text) => {
           appendUserMessage(text);
           claimAnswers.toxicExposureOther = text;
@@ -492,32 +575,27 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
       } else {
         renderScreen('other-disability-question');
       }
-    });
+    }, msg);
   }
 
   // --- Other disability (Yes hard-disabled) -----------------------------------
 
   function renderOtherDisabilityQuestionScreen() {
-    appendAgentMessage('Is there any other disability you want to claim today?');
-    renderYesDisabledNo(() => renderScreen('document-upload'));
+    const msg = appendAgentMsg('Is there any other disability you want to claim today?');
+    renderYesDisabledNo(() => renderScreen('document-upload'), msg);
   }
 
   // --- Document upload ---------------------------------------------------------
 
   function renderDocumentUploadScreen() {
-    appendAgentMessage('Please upload any supporting documents you have, or skip this step if you don\'t have any to upload right now.');
+    const msg = appendAgentMsg('Please upload any supporting documents you have, or skip this step if you don\'t have any to upload right now.');
+    const bubble = msg.querySelector('.chat-message__bubble');
 
-    const submitButton = document.createElement('mms-button');
-    submitButton.setAttribute('label', 'Submit');
-    submitButton.setAttribute('variant', 'primary');
-    submitButton.setAttribute('color-scheme', 'primary');
-    submitButton.setAttribute('size', 'md');
-
-    const skipButton = document.createElement('mms-button');
-    skipButton.setAttribute('label', 'Skip');
-    skipButton.setAttribute('variant', 'secondary');
-    skipButton.setAttribute('color-scheme', 'primary');
-    skipButton.setAttribute('size', 'md');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+    panel.style.display = 'flex';
+    panel.style.flexDirection = 'column';
+    panel.style.gap = '8px';
 
     DOCUMENT_UPLOAD_CATEGORIES.forEach((category) => {
       const row = document.createElement('div');
@@ -538,23 +616,27 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
         appendUserMessage(`📎 ${file.name} (${category.label})`);
       });
       row.appendChild(fileInput);
-
-      quickReplies.appendChild(row);
+      panel.appendChild(row);
     });
 
-    submitButton.addEventListener('click', () => {
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
+
+    addButton('Submit', 'primary', () => {
       appendUserMessage('Submit');
       clearQuickReplies();
       renderScreen('agreement');
-    });
-    quickReplies.appendChild(submitButton);
+    }, msg);
 
-    skipButton.addEventListener('click', () => {
+    addButton('Skip', 'secondary', () => {
       appendUserMessage('Skip');
       clearQuickReplies();
       renderScreen('agreement');
-    });
-    quickReplies.appendChild(skipButton);
+    }, msg);
   }
 
   // --- Agreement (reused from Healthcare Seeker's copy) -------------------------
@@ -611,17 +693,18 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
     message.append(avatar, bubble);
     transcript.appendChild(message);
     scrollTranscriptToBottom();
+    lastAgentNode = message;
 
     addButton('I agree', 'primary', () => {
       appendUserMessage('I agree');
       clearQuickReplies();
       renderScreen('submission-confirmation');
-    });
+    }, message);
     addButton('I do not agree', 'secondary', () => {
       appendUserMessage('I do not agree');
       clearQuickReplies();
       closeOutThen('Ok — since you do not agree to the terms, we are unable to move forward with your claim at this time. Your County Veterans Service Office can help you explore your options.');
-    });
+    }, message);
   }
 
   // --- Submission confirmation + what to expect ---------------------------------
@@ -665,13 +748,13 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
   function renderSubmissionConfirmationScreen() {
     applicationStatus = 'submitted';
     const dateStr = new Date().toLocaleDateString();
-    appendAgentMessage(`Your application has been submitted for ${profile.name} on ${dateStr}.`);
-    addButton('Download application', 'secondary', () => downloadClaim());
+    const msg = appendAgentMsg(`Your application has been submitted for ${profile.name} on ${dateStr}.`);
+    addButton('Download application', 'secondary', () => downloadClaim(), msg);
     addButton('Continue', 'primary', () => {
       appendUserMessage('Continue');
       clearQuickReplies();
       renderScreen('what-to-expect');
-    });
+    }, msg);
   }
 
   function renderWhatToExpectScreen() {
@@ -724,12 +807,13 @@ export function startDisabilityClaimFlow({ transcript, quickReplies, textInput, 
     message.append(avatar, bubble);
     transcript.appendChild(message);
     scrollTranscriptToBottom();
+    lastAgentNode = message;
 
     addButton('Continue', 'primary', () => {
       appendUserMessage('Continue');
       clearQuickReplies();
       renderScreen('anything-else');
-    });
+    }, message);
   }
 
   const SCREENS = {

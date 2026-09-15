@@ -4,21 +4,14 @@
 // from pathway-logic.js. Card DOM-rendering lives in card-renderers.js,
 // shared with landing.js's static topic tabs.
 
-import { getState, resetState, setIntent, setScenario, setLandingText } from './state.js?v=4';
-import { buildPathway } from './pathway-logic.js?v=2';
-import { CATEGORIES } from './questions.js?v=4';
-import { RENDERERS } from './card-renderers.js?v=3';
-import { mountFlowChat } from './flow-chat.js?v=3';
-import { RESUME_BUILDER_FLOW } from './resume-builder-flow.js';
-import { INTERVIEW_HELP_FLOW } from './interview-help-flow.js';
+import './session-reset.js?v=1';
+import { getState, resetState, setIntent, setScenario, setLandingText } from './state.js?v=6';
+import { buildPathway } from './pathway-logic.js?v=7';
+import { CATEGORIES } from './questions.js?v=6';
+import { RENDERERS } from './card-renderers.js?v=11';
+import { initChatDrawer } from './chat-drawer.js?v=19';
 
-// Tabs that show an embedded conversational chat widget (flow-chat.js)
-// instead of pre-built cards. Keyed by tab.key from pathway-logic.js's
-// JOB_FOCUS_TABS.
-const TAB_CHAT_FLOWS = {
-  'resume-builder': RESUME_BUILDER_FLOW,
-  'interview-help': INTERVIEW_HELP_FLOW,
-};
+initChatDrawer();
 
 const loadingScreen = document.getElementById('loading-screen');
 const errorScreen = document.getElementById('error-screen');
@@ -186,7 +179,7 @@ function handleFollowupAction(action, label, chatLog) {
   if (action === 'cvso') {
     renderCvsoBringResponse(chatLog);
   } else if (action === 'interview') {
-    chatLog.appendChild(createFollowupMessage('Try the Interview Help tab for answers tailored to your job position.'));
+    chatLog.appendChild(createFollowupMessage('Open Interview Help under Resources for Veterans for preparation tailored to your job position.'));
   } else if (action === 'healthcare') {
     startGuidedScenario({
       scenario: 'healthcare-seeker',
@@ -322,13 +315,69 @@ function renderFollowupCard() {
   return card;
 }
 
-// Job-seeker scenario's Employment, Resume Builder, and Interview Help tabs.
-// Mirrors landing.js's static topic-tab pattern (renderLandingTabs), adapted
-// so each panel holds a list of cards instead of exactly one.
+function renderCareerToolsCard() {
+  const fragment = document.createDocumentFragment();
+
+  const heading = document.createElement('div');
+  heading.className = 'pathway-career-tools-heading';
+  const title = document.createElement('p');
+  title.className = 'result-card__section-title pathway-career-tools-heading__title';
+  title.textContent = 'Keep Building Your Career';
+  const subcopy = document.createElement('p');
+  subcopy.className = 'pathway-career-tools-heading__subcopy';
+  subcopy.textContent = 'Use these AI-assisted tools to strengthen your application and prepare for your next interview.';
+  heading.append(title, subcopy);
+  fragment.appendChild(heading);
+
+  [
+    {
+      title: 'Resume Builder',
+      description: 'Create a resume or tailor an existing resume to a job that interests you.',
+      label: 'Build my resume',
+      href: 'resume-builder.html',
+      icon: 'file-text',
+    },
+    {
+      title: 'Interview Help',
+      description: 'Practice common questions and get preparation tips for a specific role.',
+      label: 'Prepare for an interview',
+      href: 'interview-help.html',
+      icon: 'chat-circle-text',
+    },
+  ].forEach((tool) => {
+    const card = document.createElement('mms-card');
+    card.className = 'result-card pathway-career-tools-card';
+    card.setAttribute('variant', 'outlined');
+    card.setAttribute('color-scheme', 'primary');
+    card.setAttribute('roundness', 'subtle');
+    card.setAttribute('surface', 'tint');
+    card.setAttribute('title-text', tool.title);
+    card.setAttribute('icon', tool.icon);
+
+    const body = document.createElement('div');
+    body.className = 'pathway-career-tools-card__body';
+    body.setAttribute('slot', 'body-content');
+
+    const description = document.createElement('p');
+    description.textContent = tool.description;
+
+    const link = document.createElement('a');
+    link.className = 'pathway-career-tools-card__link';
+    link.href = tool.href;
+    link.textContent = tool.label;
+
+    body.append(description, link);
+    card.appendChild(body);
+    fragment.appendChild(card);
+  });
+
+  return fragment;
+}
+
+// Job-seeker Employment tab. Mirrors landing.js's static topic-tab pattern,
+// adapted so the panel holds a list of result cards.
 const TAB_ICONS = {
   employment: 'briefcase',
-  'resume-builder': 'file-text',
-  'interview-help': 'chat-circle-text',
 };
 
 function renderResultTabs(tabs) {
@@ -348,9 +397,7 @@ function renderResultTabs(tabs) {
     panel.setAttribute('role', 'tabpanel');
     panel.hidden = index !== 0;
 
-    if (TAB_CHAT_FLOWS[tab.key]) {
-      mountFlowChat(panel, TAB_CHAT_FLOWS[tab.key]);
-    } else if (tab.cards.length) {
+    if (tab.cards.length) {
       tab.cards.forEach((card) => {
         const renderer = RENDERERS[card.key];
         if (renderer) panel.appendChild(renderer(card));
@@ -373,9 +420,18 @@ function renderResultTabs(tabs) {
   });
 }
 
+function renderJobFocusCards(tabs) {
+  employmentGrid.hidden = false;
+  tabs.flatMap((tab) => tab.cards).forEach((card) => {
+    const renderer = RENDERERS[card.key];
+    if (renderer) employmentGrid.appendChild(renderer(card));
+  });
+}
+
 function showResults(answers) {
   loadingScreen.hidden = true;
   resultsScreen.hidden = false;
+  const isJobSeeker = answers.scenario === 'job-seeker';
   const isHealthcareSeeker = answers.scenario === 'healthcare-seeker';
   // Healthcare Seeker's result screen shows both persistent cards (CVSO +
   // application status) full width, per that persona's bespoke result layout.
@@ -385,11 +441,15 @@ function showResults(answers) {
     const renderer = RENDERERS[card.key];
     if (renderer) persistentGrid.appendChild(renderer(card));
   });
-  persistentGrid.appendChild(renderFollowupCard());
+  persistentGrid.appendChild(isJobSeeker ? renderCareerToolsCard() : renderFollowupCard());
   if (jobFocusTabs.length) {
-    employmentGrid.hidden = true;
-    resultTabsWrapper.hidden = false;
-    renderResultTabs(jobFocusTabs);
+    if (resultTabsWrapper && resultTablist && resultTabpanels) {
+      employmentGrid.hidden = true;
+      resultTabsWrapper.hidden = false;
+      renderResultTabs(jobFocusTabs);
+    } else {
+      renderJobFocusCards(jobFocusTabs);
+    }
   } else if (employment) {
     const renderer = RENDERERS[employment.key];
     if (renderer) employmentGrid.appendChild(renderer(employment));
@@ -407,6 +467,16 @@ const forceError = new URLSearchParams(window.location.search).has('forceError')
 if (new URLSearchParams(window.location.search).has('reset')) {
   resetState();
 }
+const breadcrumbsEl = document.getElementById('page-breadcrumbs');
+if (breadcrumbsEl) {
+  customElements.whenDefined('mms-breadcrumbs').then(() => {
+    breadcrumbsEl.items = [
+      { label: 'Home', href: '/Ohio%20Veterans/navigator/' },
+      { label: resultsHeading?.textContent || 'Your Employment results' },
+    ];
+  });
+}
+
 const { answers } = getState();
 
 if (!forceError && Object.keys(answers).length === 0) {

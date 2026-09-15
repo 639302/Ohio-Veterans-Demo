@@ -14,12 +14,12 @@ import {
   AGREEMENT_CONTENT,
   WHAT_TO_EXPECT_CONTENT,
   GET_HELP_TEXT,
-} from './va-benefits-data.js';
-import { COUNTY_SELECT_OPTIONS, getCvsoInfo } from './county-data.js';
-import { setAnswer } from './state.js';
-import { createChatUI, wait } from './chat-ui.js?v=2';
-import { logIn } from './auth.js';
-import { renderAvatar } from './nav.js';
+} from './va-benefits-data.js?v=6';
+import { COUNTY_SELECT_OPTIONS, getCvsoInfo } from './county-data.js?v=6';
+import { setAnswer } from './state.js?v=6';
+import { createChatUI, wait } from './chat-ui.js?v=10';
+import { logIn } from './auth.js?v=6';
+import { renderAvatar } from './nav.js?v=17';
 
 const DEFAULT_PLACEHOLDER = 'Type your answer, or tap an option above';
 
@@ -50,9 +50,23 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   let applicationStatus = 'not-started';
 
   let pendingTextHandler = null;
+  let lastAgentNode = null;
+
+  function appendAgentMsg(text) {
+    lastAgentNode = appendAgentMessage(text);
+    return lastAgentNode;
+  }
+
+  function appendAgentMsgMultiline(text) {
+    const node = appendAgentMessage(text);
+    const span = node.querySelector('.chat-message__bubble > span:last-child');
+    if (span) span.style.whiteSpace = 'pre-line';
+    lastAgentNode = node;
+    return node;
+  }
 
   function clearQuickReplies() {
-    quickReplies.innerHTML = '';
+    if (quickReplies) quickReplies.innerHTML = '';
   }
 
   function showTextInput(placeholder, onSubmit) {
@@ -86,59 +100,57 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
     handleTextSubmit();
   });
 
-  function addButton(label, variant, onClick) {
+  function addButton(label, variant, onClick, targetNode = lastAgentNode) {
+    const bubble = targetNode?.querySelector('.chat-message__bubble') || quickReplies;
+    let group = bubble.querySelector('.chat-message__button-group');
+    if (!group) {
+      group = document.createElement('div');
+      group.className = 'chat-message__button-group';
+      const actions = bubble.querySelector('.chat-message__actions');
+      if (actions) {
+        bubble.insertBefore(group, actions);
+      } else {
+        bubble.appendChild(group);
+      }
+    }
     const button = document.createElement('mms-button');
     button.setAttribute('label', label);
     button.setAttribute('variant', variant || 'secondary');
     button.setAttribute('color-scheme', 'primary');
-    button.setAttribute('size', 'md');
-    button.addEventListener('click', onClick);
-    quickReplies.appendChild(button);
+    button.setAttribute('size', 'sm');
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      onClick();
+    });
+    group.appendChild(button);
+    scrollTranscriptToBottom();
     return button;
   }
 
-  function renderYesNo(onYes, onNo) {
+  function renderYesNo(onYes, onNo, targetNode = lastAgentNode) {
     addButton('Yes', 'primary', () => {
       appendUserMessage('Yes');
       clearQuickReplies();
       onYes();
-    });
+    }, targetNode);
     addButton('No', 'secondary', () => {
       appendUserMessage('No');
       clearQuickReplies();
       onNo();
-    });
-  }
-
-  function addGetHelpButton() {
-    const button = document.createElement('mms-button');
-    button.setAttribute('label', 'Need help?');
-    button.setAttribute('variant', 'ghost');
-    button.setAttribute('color-scheme', 'primary');
-    button.setAttribute('size', 'md');
-    button.addEventListener('click', () => openGetHelp());
-    quickReplies.appendChild(button);
-  }
-
-  function appendAgentMessageMultiline(text) {
-    const node = appendAgentMessage(text);
-    const span = node.querySelector('.chat-message__bubble > span:last-child');
-    if (span) span.style.whiteSpace = 'pre-line';
-    return node;
+    }, targetNode);
   }
 
   function renderScreen(screenId, args) {
     clearQuickReplies();
     hideTextInput();
     SCREENS[screenId](args || {});
-    addGetHelpButton();
   }
 
   // --- Get Help (reachable from every screen) ---------------------------
 
   function openGetHelp() {
     appendUserMessage('Need help?');
-    appendAgentMessage(GET_HELP_TEXT);
+    appendAgentMsg(GET_HELP_TEXT);
     clearQuickReplies();
     hideTextInput();
     addButton('Call', 'primary', () => {
@@ -157,17 +169,22 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
     const typing = appendTypingIndicator();
     await wait(1000);
     typing.remove();
-    appendAgentMessage('Calling MyVA411 from your computer…');
+    appendAgentMsg('Calling MyVA411 from your computer…');
     const typing2 = appendTypingIndicator();
     await wait(1200);
     typing2.remove();
-    appendAgentMessage("You're connected — a live representative will be with you shortly.");
+    appendAgentMsg("You're connected — a live representative will be with you shortly.");
     hideTextInput();
     active = false;
+    if (onFinish) onFinish();
   }
 
   function runFindRepresentative() {
-    appendAgentMessage('What Ohio county do you live in? I can look up your local accredited representative.');
+    const msg = appendAgentMsg('What Ohio county do you live in? I can look up your local accredited representative.');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a county…';
     select.size = 'lg';
@@ -179,17 +196,24 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
       appendUserMessage(label);
       clearQuickReplies();
       const info = getCvsoInfo(value);
-      appendAgentMessage(`${info.officeName} — ${info.address} — ${info.phone}`);
+      appendAgentMsg(`${info.officeName} — ${info.address} — ${info.phone}`);
       hideTextInput();
       active = false;
+      if (onFinish) onFinish();
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   // --- Wrap-up (silently records county, then ends the conversation) -----
 
   function closeOutThen(message, hasLoggedIn) {
-    appendAgentMessage(message);
+    appendAgentMsg(message);
     ensureCountyThenWrapup(hasLoggedIn);
   }
 
@@ -204,7 +228,11 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   }
 
   function renderFallbackCountyScreen() {
-    appendAgentMessage('What Ohio county do you live in?');
+    const msg = appendAgentMsg('What Ohio county do you live in?');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a county…';
     select.size = 'lg';
@@ -218,40 +246,57 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
       clearQuickReplies();
       finish();
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   async function finish() {
-    appendAgentMessage("Got it — let's put together your pathway…");
-    await wait(900);
     active = false;
-    onFinish();
-    window.location.href = 'result.html';
+    const county = getState().answers.county || profile.county || 'Franklin';
+    const info = getCvsoInfo(county);
+    const msg = appendAgentMsg(`Your health care application request has been recorded. If you have any questions or need further assistance, your local County Veterans Service Office is available to help:\n${info.officeName}\n${info.address || ''}\nPhone: ${info.phone}`);
+    addButton('Find a job', 'primary', () => {
+      document.dispatchEvent(new CustomEvent('navigator-start-flow', { detail: { scenario: 'job-seeker' } }));
+    }, msg);
+    addButton('Find my CVSO', 'secondary', () => {
+      document.dispatchEvent(new CustomEvent('navigator-start-flow', { detail: { scenario: 'cvso' } }));
+    }, msg);
+    addButton('Ask another question', 'ghost', () => {
+      document.dispatchEvent(new CustomEvent('navigator-start-flow', { detail: { scenario: null } }));
+    }, msg);
+    if (onFinish) onFinish();
   }
 
   // --- Already-applied branch ---------------------------------------------
 
   function renderAlreadyAppliedScreen() {
-    appendAgentMessage('Have you already applied for VA health care benefits?');
+    const msg = appendAgentMsg('Have you already applied for VA health care benefits?');
     renderYesNo(
       () => renderScreen('status-check-question'),
       () => renderScreen('submit-now-question'),
+      msg
     );
   }
 
   function renderStatusCheckQuestionScreen() {
-    appendAgentMessage('Would you like to check the status of your application?');
+    const msg = appendAgentMsg('Would you like to check the status of your application?');
     renderYesNo(
       () => renderScreen('status-login'),
       () => {
         applicationStatus = 'submitted';
         closeOutThen('No problem — thanks for stopping by.', false);
       },
+      msg
     );
   }
 
   function renderStatusLoginScreen() {
-    appendAgentMessage("This prototype can show a sample sign-in step, but it does not connect to ID.me or access your VA information.");
+    const msg = appendAgentMsg("To show the benefit of an API integration with ID.me , this prototype can show a sample sign-in step, but it does not connect to ID.me or access actual VA information.");
     addButton('Continue with sample sign-in', 'primary', async () => {
       appendUserMessage('Continue with sample sign-in');
       clearQuickReplies();
@@ -262,29 +307,30 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
       logIn(profile.name);
       renderAvatar();
       renderScreen('status-result');
-    });
+    }, msg);
   }
 
   function renderStatusResultScreen() {
     applicationStatus = 'pending';
     const info = getCvsoInfo(profile.county);
-    appendAgentMessage('Your application status: Pending.');
-    appendAgentMessage(`Your local CVSO: ${info.officeName} — ${info.address} — ${info.phone}`);
-    appendAgentMessage('Is there anything else I can help you with?');
+    appendAgentMsg('Your application status: Pending.');
+    appendAgentMsg(`Your local CVSO: ${info.officeName} — ${info.address} — ${info.phone}`);
+    const msg = appendAgentMsg('Is there anything else I can help you with?');
     addButton("No, that's all", 'primary', () => {
       appendUserMessage("No, that's all");
-      appendAgentMessage('Ok. Have a nice day.');
+      appendAgentMsg('Ok. Have a nice day.');
       ensureCountyThenWrapup(loggedIn);
-    });
+    }, msg);
   }
 
   // --- Not-yet-applied branch ---------------------------------------------
 
   function renderSubmitNowScreen() {
-    appendAgentMessage('Would you like to submit an application for VA health care benefits now?');
+    const msg = appendAgentMsg('Would you like to submit an application for VA health care benefits now?');
     renderYesNo(
       () => renderScreen('eligibility', { index: 0 }),
       () => closeOutThen('No problem — thanks for stopping by. You can always come back later.', false),
+      msg
     );
   }
 
@@ -298,34 +344,36 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
 
   function renderEligibilityScreen({ index }) {
     const question = ELIGIBILITY_QUESTIONS[index];
-    appendAgentMessage(question.prompt);
+    const msg = appendAgentMsg(question.prompt);
     renderYesNo(
       () => (question.failValue === 'yes' ? renderScreen('not-eligible') : advanceEligibility(index)),
       () => (question.failValue === 'no' ? renderScreen('not-eligible') : advanceEligibility(index)),
+      msg
     );
   }
 
   function renderNotEligibleScreen() {
     applicationStatus = 'not-eligible';
-    appendAgentMessage("Based on your answers, it doesn't look like you're eligible for VA health care benefits at this time. Your County Veterans Service Office can help you explore other options or double-check your eligibility.");
-    appendAgentMessage('Is there anything else I can help you with?');
+    appendAgentMsg("Based on your answers, it doesn't look like you're eligible for VA health care benefits at this time. Your County Veterans Service Office can help you explore other options or double-check your eligibility.");
+    const msg = appendAgentMsg('Is there anything else I can help you with?');
     addButton("No, that's all", 'primary', () => {
       appendUserMessage("No, that's all");
-      appendAgentMessage('Ok. Have a nice day.');
+      appendAgentMsg('Ok. Have a nice day.');
       ensureCountyThenWrapup(loggedIn);
-    });
+    }, msg);
   }
 
   function renderFillOutNowScreen() {
-    appendAgentMessage('Good news — based on your answers, you may be eligible for VA health care benefits. Would you like to fill out the application now?');
+    const msg = appendAgentMsg('Good news — based on your answers, you may be eligible for VA health care benefits. Would you like to fill out the application now?');
     renderYesNo(
       () => renderScreen('login'),
       () => closeOutThen("No problem — you can always come back and fill out the application when you're ready.", false),
+      msg
     );
   }
 
   function renderLoginScreen() {
-    appendAgentMessage("This prototype can show a sample sign-in step, but it does not connect to ID.me or access your VA information.");
+    const msg = appendAgentMsg("To show the benefit of an API integration with ID.me , this prototype can show a sample sign-in step, but it does not connect to ID.me or access actual VA information.");
     addButton('Continue with sample sign-in', 'primary', async () => {
       appendUserMessage('Continue with sample sign-in');
       clearQuickReplies();
@@ -336,7 +384,7 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
       logIn(profile.name);
       renderAvatar();
       renderScreen('profile-summary');
-    });
+    }, msg);
   }
 
   function formatProfileSummary() {
@@ -361,17 +409,22 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   }
 
   function renderProfileSummaryScreen() {
-    appendAgentMessage("Here's what I found on file for you:");
-    appendAgentMessageMultiline(formatProfileSummary());
-    appendAgentMessage('Does this all look correct?');
+    appendAgentMsg("Here's what I found on file for you:");
+    appendAgentMsgMultiline(formatProfileSummary());
+    const msg = appendAgentMsg('Does this all look correct?');
     renderYesNo(
       () => renderScreen('insurance-question'),
       () => renderScreen('edit-select-field'),
+      msg
     );
   }
 
   function renderEditSelectFieldScreen() {
-    appendAgentMessage('Which field would you like to update?');
+    const msg = appendAgentMsg('Which field would you like to update?');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a field…';
     select.size = 'lg';
@@ -384,11 +437,17 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
       clearQuickReplies();
       renderScreen('edit-value', { field });
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   function renderEditValueScreen({ field }) {
-    appendAgentMessage(`What should ${field.label.toLowerCase()} be instead?`);
+    appendAgentMsg(`What should ${field.label.toLowerCase()} be instead?`);
     showTextInput(`Enter new ${field.label.toLowerCase()}`, (text) => {
       appendUserMessage(text);
       profile = { ...profile, [field.key]: text };
@@ -397,16 +456,17 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   }
 
   function renderInsuranceQuestionScreen() {
-    appendAgentMessage('Do you have health insurance you would like to add to your application?');
+    const msg = appendAgentMsg('Do you have health insurance you would like to add to your application?');
     renderYesNo(
       () => renderScreen('insurance-form', { step: 0 }),
       () => renderScreen('facility-picker'),
+      msg
     );
   }
 
   function renderInsuranceFormScreen({ step }) {
     const field = INSURANCE_FIELDS[step];
-    appendAgentMessage(field.prompt);
+    appendAgentMsg(field.prompt);
     showTextInput('Type your answer', (text) => {
       appendUserMessage(text);
       applicationAnswers[field.key] = text;
@@ -419,7 +479,11 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   }
 
   function renderFacilityPickerScreen() {
-    appendAgentMessage('Which Ohio VA facility would you prefer for your care?');
+    const msg = appendAgentMsg('Which Ohio VA facility would you prefer for your care?');
+    const bubble = msg.querySelector('.chat-message__bubble');
+    const panel = document.createElement('div');
+    panel.className = 'chat-options';
+
     const select = document.createElement('mms-select');
     select.placeholder = 'Select a facility…';
     select.size = 'lg';
@@ -433,14 +497,21 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
       clearQuickReplies();
       renderScreen('appointment-contact');
     });
-    quickReplies.appendChild(select);
+    panel.appendChild(select);
+    const actions = bubble.querySelector('.chat-message__actions');
+    if (actions) {
+      bubble.insertBefore(panel, actions);
+    } else {
+      bubble.appendChild(panel);
+    }
   }
 
   function renderAppointmentContactScreen() {
-    appendAgentMessage('Would you like the VA to contact you to schedule your first appointment?');
+    const msg = appendAgentMsg('Would you like the VA to contact you to schedule your first appointment?');
     renderYesNo(
       () => { applicationAnswers.scheduleContact = 'Yes'; renderScreen('agreement'); },
       () => { applicationAnswers.scheduleContact = 'No'; renderScreen('agreement'); },
+      msg
     );
   }
 
@@ -496,17 +567,18 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
     message.append(avatar, bubble);
     transcript.appendChild(message);
     scrollTranscriptToBottom();
+    lastAgentNode = message;
 
     addButton('I agree', 'primary', () => {
       appendUserMessage('I agree');
       clearQuickReplies();
       renderScreen('submission-confirmation');
-    });
+    }, message);
     addButton('I do not agree', 'secondary', () => {
       appendUserMessage('I do not agree');
       clearQuickReplies();
       closeOutThen('Ok — since you do not agree to the terms, we are unable to move forward with your application at this time. Your County Veterans Service Office can help you explore your options.', loggedIn);
-    });
+    }, message);
   }
 
   function buildApplicationTextSummary() {
@@ -550,13 +622,13 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
   function renderSubmissionConfirmationScreen() {
     applicationStatus = 'submitted';
     const dateStr = new Date().toLocaleDateString();
-    appendAgentMessage(`Your application has been submitted for ${profile.name} on ${dateStr}.`);
-    addButton('Download application', 'secondary', () => downloadApplication());
+    const msg = appendAgentMsg(`Your application has been submitted for ${profile.name} on ${dateStr}.`);
+    addButton('Download application', 'secondary', () => downloadApplication(), msg);
     addButton('Continue', 'primary', () => {
       appendUserMessage('Continue');
       clearQuickReplies();
       renderScreen('what-to-expect');
-    });
+    }, msg);
   }
 
   function renderWhatToExpectScreen() {
@@ -609,21 +681,22 @@ export function startVaBenefitsFlow({ transcript, quickReplies, textInput, sendB
     message.append(avatar, bubble);
     transcript.appendChild(message);
     scrollTranscriptToBottom();
+    lastAgentNode = message;
 
     addButton('Continue', 'primary', () => {
       appendUserMessage('Continue');
       clearQuickReplies();
       renderScreen('anything-else');
-    });
+    }, message);
   }
 
   function renderAnythingElseScreen() {
-    appendAgentMessage('Is there anything else I can help you with today?');
+    const msg = appendAgentMsg('Is there anything else I can help you with today?');
     addButton("No, that's all — thank you", 'primary', () => {
       appendUserMessage("No, that's all — thank you");
-      appendAgentMessage('Ok. Have a nice day.');
+      appendAgentMsg('Ok. Have a nice day.');
       ensureCountyThenWrapup(loggedIn);
-    });
+    }, msg);
   }
 
   const SCREENS = {

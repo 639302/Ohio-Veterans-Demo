@@ -9,6 +9,38 @@ export function createChatUI(transcriptEl) {
     transcriptEl.scrollTop = transcriptEl.scrollHeight;
   }
 
+  // Renders "[label](url)" spans within an agent-message string as real
+  // <a> tags (external links get target=_blank), leaving the rest of the
+  // text as-is. Used for the crisis-support / GI Bill / Veterans Homes /
+  // Caregiver Support canned responses, which include markdown-style links
+  // per the content the team wrote. Bubble text otherwise stays
+  // `white-space: pre-line` so \n / \n\n in those responses still render as
+  // line/paragraph breaks without needing real <p>/<ul> markup.
+  function renderMarkdownLinks(text) {
+    const fragment = document.createDocumentFragment();
+    const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = linkPattern.exec(text))) {
+      if (match.index > lastIndex) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      const link = document.createElement('a');
+      link.href = match[2];
+      link.textContent = match[1];
+      if (/^https?:\/\//i.test(match[2])) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
+      fragment.appendChild(link);
+      lastIndex = linkPattern.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+    return fragment;
+  }
+
   function appendAgentMessage(text) {
     const message = document.createElement('div');
     message.className = 'chat-message chat-message--agent';
@@ -30,7 +62,11 @@ export function createChatUI(transcriptEl) {
     badge.textContent = 'AI-powered response';
     author.appendChild(badge);
     const body = document.createElement('span');
-    body.textContent = text;
+    if (/\[[^\]]+\]\([^)]+\)/.test(text)) {
+      body.appendChild(renderMarkdownLinks(text));
+    } else {
+      body.textContent = text;
+    }
     const actions = document.createElement('div');
     actions.className = 'chat-message__actions';
     const reportButton = document.createElement('button');
@@ -220,12 +256,40 @@ export function wait(ms) {
 // suppressed while `textInput` has focus so typing isn't hijacked. Returns
 // { dispose } — callers must call it before re-rendering the next turn's
 // options so keydown listeners don't stack across turns.
-export function renderOptionList(container, options, { mode, selected, onSelect, onToggle, onSubmit, submitLabel, textInput } = {}) {
+
+// mms-checkbox-group has no native `orientation` attribute (unlike
+// mms-radio-group), so to lay its checkboxes out horizontally we reach into
+// its shadow DOM and restyle the internal `.items-container` directly. The
+// shadow root isn't available until the custom element upgrades after being
+// connected to the document, so this retries via requestAnimationFrame until
+// it appears (bounded to avoid an infinite loop if the element is discarded
+// before ever being inserted).
+function applyHorizontalCheckboxLayout(group, attempts = 0) {
+  const itemsContainer = group.shadowRoot?.querySelector('.items-container');
+  if (itemsContainer) {
+    itemsContainer.style.flexDirection = 'row';
+    itemsContainer.style.flexWrap = 'wrap';
+    itemsContainer.style.columnGap = 'var(--spacing-sm, 16px)';
+    itemsContainer.style.rowGap = 'var(--spacing-xs2, 8px)';
+    return;
+  }
+  if (attempts >= 20) return;
+  requestAnimationFrame(() => applyHorizontalCheckboxLayout(group, attempts + 1));
+}
+
+export function renderOptionList(container, options, { mode, selected, onSelect, onToggle, onSubmit, submitLabel, textInput, orientation = 'horizontal', itemsPerRow } = {}) {
   const panel = document.createElement('div');
   panel.className = 'chat-options';
 
   const group = document.createElement(mode === 'multi' ? 'mms-checkbox-group' : 'mms-radio-group');
   group.setAttribute('color-scheme', 'primary');
+  if (mode === 'multi') {
+    // mms-checkbox-group has no native `orientation` prop, so lay its items
+    // out horizontally (with wrapping) by reaching into its shadow DOM once rendered.
+    if (orientation === 'horizontal') applyHorizontalCheckboxLayout(group);
+  } else if (orientation) {
+    group.setAttribute('orientation', orientation);
+  }
   if (mode === 'single' && selected) group.value = selected;
 
   const selectedSet = mode === 'multi' ? new Set(selected || []) : null;
@@ -236,12 +300,21 @@ export function renderOptionList(container, options, { mode, selected, onSelect,
     control.setAttribute('label', option.label);
     control.setAttribute('value', option.value);
 
+    if (itemsPerRow) {
+      // Force exactly N controls per row (then wrap) regardless of label
+      // length. Standard N-column flex formula accounting for the (N-1)
+      // gaps between columns in each row: (100% - (N-1) * gap) / N.
+      control.style.flex = `0 0 calc((100% - (${itemsPerRow} - 1) * var(--spacing-md1, 16px)) / ${itemsPerRow})`;
+      control.style.boxSizing = 'border-box';
+    }
+
     if (mode === 'multi') {
       control.setAttribute('checked-value', option.value);
       if (selectedSet.has(option.value)) control.setAttribute('checked', '');
       control.addEventListener('change', (event) => {
-        const { checked, value } = event.detail;
-        onToggle?.(value, checked);
+        const checked = event?.detail?.checked !== undefined ? event.detail.checked : Boolean(control.checked || control.hasAttribute('checked'));
+        const val = event?.detail?.value || control.getAttribute('value') || option.value;
+        onToggle?.(val, checked);
       });
     }
 
@@ -250,7 +323,10 @@ export function renderOptionList(container, options, { mode, selected, onSelect,
   });
 
   if (mode === 'single') {
-    group.addEventListener('change', (event) => onSelect?.(event.detail.value));
+    group.addEventListener('change', (event) => {
+      const val = event?.detail?.value || group.value || event?.target?.value;
+      if (val) onSelect?.(val);
+    });
   }
 
   panel.appendChild(group);
@@ -270,7 +346,7 @@ export function renderOptionList(container, options, { mode, selected, onSelect,
     submitButton.setAttribute('label', submitLabel || 'Continue');
     submitButton.setAttribute('variant', 'primary');
     submitButton.setAttribute('color-scheme', 'primary');
-    submitButton.setAttribute('size', 'md');
+    submitButton.setAttribute('size', 'sm');
     submitButton.addEventListener('click', () => onSubmit?.());
 
     footer.append(hint, submitButton);

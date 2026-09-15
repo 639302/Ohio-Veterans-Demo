@@ -5,14 +5,15 @@
 // Outbound links use <mms-link>, section glyphs use <mms-icon>; card
 // containers use the DS's <mms-card>, content goes in its body-content slot.
 
-function cardShell(card, { crisis = false } = {}) {
+function cardShell(card, { crisis = false, variant = 'accent-left', subtitleText = '', surface = 'tint' } = {}) {
   const el = document.createElement('mms-card');
   el.className = 'result-card' + (crisis ? ' result-card--crisis' : '');
-  el.setAttribute('variant', 'accent-left');
+  el.setAttribute('variant', variant);
   el.setAttribute('color-scheme', crisis ? 'accent' : 'primary');
   el.setAttribute('roundness', 'subtle');
-  el.setAttribute('surface', 'tint');
+  el.setAttribute('surface', surface);
   el.setAttribute('title-text', card.title);
+  if (subtitleText) el.setAttribute('subtitle-text', subtitleText);
   if (card.icon) el.setAttribute('icon', card.icon);
 
   const body = document.createElement('div');
@@ -23,42 +24,49 @@ function cardShell(card, { crisis = false } = {}) {
 }
 
 function renderCvsoCard(card) {
-  const { el, body } = cardShell(card);
-  const p1 = document.createElement('p');
-  p1.textContent = card.officeName;
-  const p2 = document.createElement('p');
-  p2.innerHTML = `<strong>Phone:</strong> ${card.phone}`;
-  body.append(p1, p2);
+  const { el, body } = cardShell(card, { variant: 'outlined', subtitleText: card.officeName, surface: 'tint' });
+  el.classList.add('result-card--cvso');
+
+  const list = document.createElement('ul');
+  list.className = 'result-card--cvso__list';
+  const phoneItem = document.createElement('li');
+  phoneItem.innerHTML = `<strong>Phone:</strong> ${card.phone}`;
+  list.appendChild(phoneItem);
+
   if (card.address) {
-    const p3 = document.createElement('p');
-    p3.innerHTML = `<strong>Address:</strong> ${card.address}`;
-    body.appendChild(p3);
+    const addressItem = document.createElement('li');
+    addressItem.innerHTML = `<strong>Address:</strong> ${card.address}`;
+    list.appendChild(addressItem);
   }
   if (card.email) {
-    const p4 = document.createElement('p');
+    const emailItem = document.createElement('li');
     const emailLabel = document.createElement('strong');
     emailLabel.textContent = 'Email: ';
     const emailLink = document.createElement('mms-link');
     emailLink.setAttribute('href', `mailto:${card.email}`);
     emailLink.setAttribute('label', card.email);
-    p4.append(emailLabel, emailLink);
-    body.appendChild(p4);
+    emailItem.append(emailLabel, emailLink);
+    list.appendChild(emailItem);
   }
+  if (card.referenceNumber) {
+    const refItem = document.createElement('li');
+    refItem.innerHTML = `<strong>Reference number:</strong> <span style="font-family: var(--font-family-tabular, monospace);">${card.referenceNumber}</span>`;
+    list.appendChild(refItem);
+  }
+  body.appendChild(list);
+
   if (card.website) {
-    const p5 = document.createElement('p');
+    el.setAttribute('show-actions', '');
+    el.setAttribute('action-style', 'link');
     const websiteLink = document.createElement('mms-link');
+    websiteLink.setAttribute('slot', 'actions');
     websiteLink.setAttribute('href', card.website);
     websiteLink.setAttribute('target', '_blank');
     websiteLink.setAttribute('label', 'Visit office website');
     websiteLink.setAttribute('right-icon', 'arrow-square-out');
-    p5.appendChild(websiteLink);
-    body.appendChild(p5);
+    el.appendChild(websiteLink);
   }
-  if (card.referenceNumber) {
-    const ref = document.createElement('p');
-    ref.innerHTML = `<strong>Reference number:</strong> <span style="font-family: var(--font-family-tabular, monospace);">${card.referenceNumber}</span>`;
-    body.appendChild(ref);
-  }
+
   return el;
 }
 

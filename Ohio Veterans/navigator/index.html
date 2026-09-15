@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/styles/tokens-semantic.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs.css">
 <link rel="stylesheet" href="../../node_modules/@mms/design-system/dist/themes/uss-oh-dvs-dark.css">
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="styles.css?v=66">
 <script type="importmap">
 {
   "imports": {
@@ -30,10 +30,13 @@
     "@mms/design-system/components/mms-card": "../../node_modules/@mms/design-system/dist/components/card/mms-card.component.js",
     "@mms/design-system/components/mms-checkbox": "../../node_modules/@mms/design-system/dist/components/checkbox/mms-checkbox.component.js",
     "@mms/design-system/components/mms-checkbox-group": "../../node_modules/@mms/design-system/dist/components/checkbox-group/mms-checkbox-group.component.js",
+    "@mms/design-system/components/mms-header": "../../node_modules/@mms/design-system/dist/components/header/mms-header.component.js",
     "@mms/design-system/components/mms-icon": "../../node_modules/@mms/design-system/dist/components/icon/mms-icon.component.js",
+    "@mms/design-system/components/mms-inline-alert": "../../node_modules/@mms/design-system/dist/components/inline-alert/mms-inline-alert.component.js",
     "@mms/design-system/components/mms-link": "../../node_modules/@mms/design-system/dist/components/link/mms-link.component.js",
     "@mms/design-system/components/mms-modal": "../../node_modules/@mms/design-system/dist/components/modal/mms-modal.component.js",
     "@mms/design-system/components/mms-radio": "../../node_modules/@mms/design-system/dist/components/radio/mms-radio.component.js",
+    "@mms/design-system/components/mms-radio-group": "../../node_modules/@mms/design-system/dist/components/radio-group/mms-radio-group.component.js",
     "@mms/design-system/components/mms-select": "../../node_modules/@mms/design-system/dist/components/select/mms-select.component.js",
     "@mms/design-system/components/mms-tabs": "../../node_modules/@mms/design-system/dist/components/tabs/mms-tabs.component.js",
     "@mms/design-system/components/mms-tabs-item": "../../node_modules/@mms/design-system/dist/components/tabs-item/mms-tabs-item.component.js",
@@ -45,17 +48,26 @@
 <script type="module">
   import '@mms/design-system/components/mms-button';
   import '@mms/design-system/components/mms-card';
+  import '@mms/design-system/components/mms-checkbox';
+  import '@mms/design-system/components/mms-checkbox-group';
+  import '@mms/design-system/components/mms-header';
   import '@mms/design-system/components/mms-icon';
+  import '@mms/design-system/components/mms-inline-alert';
   import '@mms/design-system/components/mms-link';
   import '@mms/design-system/components/mms-modal';
+  import '@mms/design-system/components/mms-radio';
+  import '@mms/design-system/components/mms-radio-group';
   import '@mms/design-system/components/mms-select';
   import '@mms/design-system/components/mms-tabs';
   import '@mms/design-system/components/mms-tabs-item';
   import '@mms/design-system/components/mms-text-field';
+  // dismissible defaults to true on mms-inline-alert; these are persistent
+  // AI-disclosure notices, not attribute-settable to false (Boolean attr),
+  // so clear the property directly once the DOM is ready.
+  document.querySelectorAll('.chat-safety-panel mms-inline-alert').forEach((el) => { el.dismissible = false; });
 </script>
 </head>
 <body>
-<a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="gov-banner">
   <button type="button" class="gov-banner__toggle" id="gov-banner-toggle" aria-expanded="false" aria-controls="gov-banner-panel">
     <span>An official State of Ohio site.</span>
@@ -76,30 +88,42 @@
     </div>
   </div>
 </div>
-<header class="nav-header">
-  <a href="/Ohio%20Veterans/navigator/" class="nav-header__brand">
-    <img src="assets/odvs-logo-horiz-for-taleo.webp" alt="Ohio Department of Veterans Services" class="nav-header__logo">
-  </a>
-  <mms-button id="nav-menu-toggle" variant="ghost" color-scheme="primary" icon-only left-icon="list" label="Menu" size="lg" aria-expanded="false" aria-controls="nav-collapsible" aria-haspopup="true"></mms-button>
-  <div class="nav-header__collapsible" id="nav-collapsible">
-    <nav class="nav-header__nav" aria-label="Primary">
-      <a href="/Ohio%20Veterans/navigator/">Home</a>
-      <a href="result.html">Your Pathway</a>
-      <a href="about.html">About</a>
-    </nav>
-    <div class="nav-header__account">
-      <div class="nav-header__auth-buttons" id="nav-auth-buttons">
-        <mms-button id="nav-login-button" variant="primary" color-scheme="primary" label="Login" size="md"></mms-button>
-        <mms-button id="nav-create-account-button" variant="secondary" color-scheme="primary" label="Create an Account" size="md"></mms-button>
-      </div>
-      <button type="button" class="account-trigger" id="nav-account-button" aria-expanded="false" aria-haspopup="true" aria-label="Account menu">
-        <span class="account-avatar" id="account-avatar" aria-hidden="true"></span>
-        <mms-icon name="caret-down" size="sm"></mms-icon>
-      </button>
-      <div class="account-menu" id="account-menu" hidden></div>
+<mms-header class="site-header" container="full" logo-size="xl" accent-line="brand" accent-line-color="primary" shrink-on-scroll scroll-threshold="24" home-href="/Ohio%20Veterans/navigator/" home-label="Ohio Department of Veterans Services">
+  <img slot="logo" src="assets/odvs-logo-horiz.png" alt="Ohio Department of Veterans Services" class="nav-header__logo">
+  <img slot="logo-compact" src="assets/odvs-logo-horiz.png" alt="Ohio Department of Veterans Services" class="nav-header__logo nav-header__logo--compact">
+  <div slot="nav" class="nav-header__dropdown">
+    <button type="button" class="nav-header__nav-trigger" aria-expanded="false" aria-controls="resources-menu">
+      <span>Resources for Veterans</span>
+      <mms-icon name="caret-down" size="sm" aria-hidden="true"></mms-icon>
+    </button>
+    <div class="nav-header__submenu" id="resources-menu" hidden>
+      <a href="resources.html">All Resources</a>
+      <a href="jobs-education.html">Jobs &amp; Education</a>
+      <a href="benefits-resource-guide.html">Benefits Resource Guide</a>
+      <a href="find-a-cvso.html">Find a CVSO</a>
+      <a href="veterans-homes.html">Veterans Homes</a>
+      <a href="mental-health.html">Mental Health</a>
     </div>
   </div>
-</header>
+  <button slot="nav" type="button" class="nav-header__nav-trigger nav-header__nav-trigger--static">About ODVS</button>
+  <button slot="nav" type="button" class="nav-header__nav-trigger nav-header__nav-trigger--static">News &amp; Events</button>
+  <mms-button slot="actions" id="nav-help-button" variant="ghost" color-scheme="onyx" left-icon="question" label="Help" aria-expanded="false" aria-controls="help-menu"></mms-button>
+  <mms-button slot="actions" id="nav-search-button" variant="ghost" color-scheme="onyx" left-icon="magnifying-glass" label="Search" aria-expanded="false" aria-controls="search-menu"></mms-button>
+  <mms-button slot="account" id="nav-account-button" variant="ghost" color-scheme="onyx" left-icon="user-circle" label="Account" aria-expanded="false" aria-haspopup="true" aria-controls="account-menu"></mms-button>
+</mms-header>
+<div class="nav-header__utility-panel" id="help-menu" hidden>
+  <a href="/Ohio%20Veterans/navigator/#main-content">Ask The Navigator</a>
+  <a href="https://dvs.ohio.gov/what-we-do/find-a-cvso">Find a CVSO</a>
+  <a href="https://dvs.ohio.gov/contact-us">Contact ODVS</a>
+  <a href="tel:988">Veterans Crisis Line: 988, press 1</a>
+</div>
+<div class="nav-header__utility-panel nav-header__utility-panel--search" id="search-menu" hidden>
+  <label class="visually-hidden" for="site-search-input">Search Ohio Department of Veterans Services</label>
+  <mms-text-field id="site-search-input" placeholder="Search ODVS" size="lg"></mms-text-field>
+  <mms-button id="site-search-submit" label="Search ODVS" variant="primary" color-scheme="primary" size="md"></mms-button>
+  <a href="/Ohio%20Veterans/navigator/#main-content">Ask The Navigator instead</a>
+</div>
+<div class="account-menu" id="account-menu" hidden></div>
 
 <mms-modal id="login-modal" size="sm" title-text="Login" primary-label="Login" secondary-label="Cancel" color-scheme="primary">
   <p class="auth-modal-copy"><strong>Prototype only:</strong> this demo does not connect to VA, ID.me, or Login.gov systems. Do not enter real account credentials or sensitive personal information.</p>
@@ -126,12 +150,17 @@
   </form>
 </mms-modal>
 
+<mms-modal id="ai-feedback-modal" size="sm" title-text="Report a problem with this AI response" primary-label="Send feedback" secondary-label="Cancel" color-scheme="primary">
+  <p class="auth-modal-copy">Thank you for helping us improve. In this prototype, feedback is not sent or stored. Do not include personal, medical, or claim information.</p>
+  <mms-text-field id="ai-feedback-text" label="What was inaccurate, unclear, or unsafe?" input-type="text"></mms-text-field>
+</mms-modal>
+
 <main class="layout-container" id="main-content">
   <div class="landing-layout">
     <div class="landing-content">
       <div class="landing-hero">
         <h1>Find the right benefits, services, and support in Ohio.</h1>
-        <p>Use our AI-powered chat tool to find information and suggested next steps for services across Ohio.</p>
+        <p>Ask the AI-assisted Navigator for help with benefits, claims, health care, jobs, County Veterans Service Offices, and other Ohio veteran services.</p>
       </div>
 
       <div class="landing-form" id="landing-form" hidden>
@@ -147,32 +176,21 @@
             label="Get Started"
             variant="primary"
             color-scheme="primary"
+            left-icon="magic-wand"
             size="lg"
           ></mms-button>
         </div>
       </div>
 
-      <div class="landing-form" id="landing-scenario-form" hidden>
-        <label class="visually-hidden" for="landing-scenario-select">Choose what best describes you</label>
-        <div class="landing-form__row">
-          <mms-select
-            id="landing-scenario-select"
-            placeholder="What best describes you?"
-            size="lg"
-          ></mms-select>
-          <mms-button
-            id="landing-scenario-submit"
-            label="Get Started"
-            variant="primary"
-            color-scheme="primary"
-            size="lg"
-          ></mms-button>
+      <section class="landing-prompts" aria-labelledby="landing-prompts-heading">
+        <h2 id="landing-prompts-heading">Try using one of these suggestions or enter your own:</h2>
+        <div class="landing-prompt-grid">
+          <mms-card class="landing-prompt-card" variant="outlined" surface="tint" show-body="false" title-size="body-bold" title-text="I need employment help" role="button" tabindex="0" data-prompt-scenario="job-seeker"></mms-card>
+          <mms-card class="landing-prompt-card" variant="outlined" surface="tint" show-body="false" title-size="body-bold" title-text="File a disability claim" role="button" tabindex="0" data-prompt-scenario="disability-claim-reporter"></mms-card>
+          <mms-card class="landing-prompt-card" variant="outlined" surface="tint" show-body="false" title-size="body-bold" title-text="File for healthcare benefits" role="button" tabindex="0" data-prompt-scenario="healthcare-seeker"></mms-card>
+          <mms-card class="landing-prompt-card" variant="outlined" surface="tint" show-body="false" title-size="body-bold" title-text="Find my CVSO" role="button" tabindex="0" data-prompt-text="Find my CVSO"></mms-card>
         </div>
-      </div>
-    </div>
-
-    <div class="landing-image" aria-hidden="true">
-      <img src="assets/homepage.jpg" alt="" class="landing-image__img">
+      </section>
     </div>
   </div>
 
@@ -186,7 +204,113 @@
   </section>
 </main>
 
-<script type="module" src="nav.js"></script>
-<script type="module" src="landing.js"></script>
+<div class="chat-drawer-backdrop" id="chat-drawer-backdrop"></div>
+<section class="chat-drawer" id="chat-drawer" aria-label="The Navigator Chat">
+  <div class="chat-drawer__header">
+    <div class="chat-drawer__header-left">
+      <div class="chat-drawer__avatar" aria-hidden="true">
+        <mms-icon name="magic-wand" size="md"></mms-icon>
+      </div>
+      <div class="chat-drawer__header-text">
+        <h2 class="chat-drawer__title">The Navigator</h2>
+        <span class="chat-drawer__badge">AI-assisted veteran navigator</span>
+      </div>
+    </div>
+    <div class="chat-drawer__header-actions">
+      <mms-button id="chat-drawer-close" label="Close" icon-only left-icon="x" variant="ghost" color-scheme="onyx" size="md"></mms-button>
+    </div>
+  </div>
+  <div class="chat-drawer__body">
+    <div class="chat-transcript" id="chat-transcript" role="log" aria-live="polite"></div>
+    <div class="chat-quick-replies" id="chat-quick-replies" hidden></div>
+    <div class="chat-drawer__need-help" id="chat-drawer-need-help">
+      <mms-button id="chat-drawer-need-help-btn" label="Need help?" variant="ghost" color-scheme="primary" size="sm" left-icon="question"></mms-button>
+    </div>
+    <div class="chat-input-row">
+      <label class="visually-hidden" for="chat-text-input">Type your answer</label>
+      <mms-text-field id="chat-text-input" placeholder="Type your answer, or tap an option above" size="lg"></mms-text-field>
+      <mms-button id="chat-send-button" label="Send" icon-only left-icon="paper-plane-right" variant="primary" color-scheme="primary" size="lg"></mms-button>
+    </div>
+    <div class="chat-safety-panel" aria-label="AI chat safety information">
+      <mms-inline-alert alert-type="caution" summary="AI-powered tool—not a person." message="It cannot make decisions, determine eligibility, provide legal or medical advice."></mms-inline-alert>
+      <mms-inline-alert alert-type="caution" summary="In crisis, call 988, then press 1." message="Do not share sensitive personal information." action action-text="Talk to a Veterans Service Officer" action-href="https://dvs.ohio.gov/resources-for-veterans/find-your-cvso"></mms-inline-alert>
+    </div>
+  </div>
+</section>
+
+<mms-button
+  class="navigator-launcher"
+  id="navigator-launcher"
+  variant="primary"
+  color-scheme="primary"
+  size="lg"
+  roundness="rounded"
+  left-icon="magic-wand"
+  label="The Navigator"
+></mms-button>
+
+<footer class="odvs-footer">
+  <div class="odvs-footer__main">
+    <div class="odvs-footer__content">
+      <h2>Ohio Department of Veterans Services</h2>
+      <div class="odvs-footer__contact-row" aria-label="Contact information">
+        <a href="https://maps.google.com/?q=77+S.+High+St.,+7th+Flr.,+Columbus,+OH+43215" class="odvs-footer__contact-link">
+          <mms-icon name="map-pin" size="md" aria-hidden="true"></mms-icon>
+          <span>77 S. High St., 7th Flr., Columbus, OH 43215</span>
+        </a>
+        <a href="mailto:contactus@dvs.ohio.gov" class="odvs-footer__contact-link">
+          <mms-icon name="envelope" size="md" aria-hidden="true"></mms-icon>
+          <span>contactus@dvs.ohio.gov</span>
+        </a>
+        <a href="tel:+16146440898" class="odvs-footer__contact-link">
+          <mms-icon name="device-mobile" size="md" aria-hidden="true"></mms-icon>
+          <span>(614) 644-0898</span>
+        </a>
+        <div class="odvs-footer__socials" aria-label="Social media">
+          <a href="https://www.facebook.com/OhioVets" aria-label="Facebook"><mms-icon name="facebook-logo" size="md"></mms-icon></a>
+          <a href="https://x.com/OhioVets" aria-label="X"><mms-icon name="x-logo" size="md"></mms-icon></a>
+          <a href="https://www.instagram.com/ohiovets" aria-label="Instagram"><mms-icon name="instagram-logo" size="md"></mms-icon></a>
+          <a href="https://www.youtube.com/user/OhioVets" aria-label="YouTube"><mms-icon name="youtube-logo" size="md"></mms-icon></a>
+          <a href="https://www.linkedin.com/company/ohio-department-of-veterans-services/" aria-label="LinkedIn"><mms-icon name="linkedin-logo" size="md"></mms-icon></a>
+        </div>
+      </div>
+      <nav class="odvs-footer__nav" aria-label="Footer">
+        <a href="https://dvs.ohio.gov/contact-us">Contact</a>
+        <a href="https://governor.ohio.gov/">Governor Mike DeWine</a>
+        <a href="https://dvs.ohio.gov/about-us/director">John C. Harris, Jr.</a>
+      </nav>
+    </div>
+  </div>
+  <div class="odvs-footer__crisis">
+    <div class="odvs-footer__content odvs-footer__crisis-content">
+      <p>Ohioans experiencing a mental health or addiction crisis, or their loved ones, can call, text, or chat the 988 Suicide &amp; Crisis Lifeline to reach a trained specialist for support.</p>
+      <a href="https://988.ohio.gov/" class="odvs-footer__crisis-badge" aria-label="988 Suicide and Crisis Lifeline Ohio">
+        <span>988</span>
+        <strong>Suicide &amp; Crisis Lifeline</strong>
+        <em>Ohio</em>
+      </a>
+    </div>
+  </div>
+  <div class="odvs-footer__legal">
+    <div class="odvs-footer__content odvs-footer__legal-content">
+      <div class="odvs-footer__powered">
+        <span>Powered by</span>
+        <strong>IOP</strong>
+        <span>Innovate Ohio Platform</span>
+      </div>
+      <nav class="odvs-footer__legal-links" aria-label="Legal and accessibility">
+        <a href="https://dvs.ohio.gov/privacy-notice-and-policies">Privacy Notice &amp; Policies</a>
+        <a href="https://dvs.ohio.gov/accessibility">Accessibility</a>
+        <a href="https://checkbook.ohio.gov/">Ohio Checkbook</a>
+        <a href="https://dvs.ohio.gov/translation">
+          <mms-icon name="globe" size="md" aria-hidden="true"></mms-icon>
+          <span>Translation</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="landing.js?v=21"></script>
 </body>
 </html>

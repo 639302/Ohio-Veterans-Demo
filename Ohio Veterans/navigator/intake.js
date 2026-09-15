@@ -6,6 +6,7 @@
 // path) or by typed free text, matched via questions.js/county-data.js's
 // keyword matchers.
 
+import './session-reset.js?v=1';
 import { matchOptionsFromText } from './questions.js?v=4';
 import { COUNTY_SELECT_OPTIONS, getCvsoInfo, matchCountyOrZipFromText } from './county-data.js?v=2';
 import {
@@ -17,7 +18,7 @@ import {
   goToPrevious,
   isLastQuestion,
 } from './state.js?v=4';
-import { createChatUI, wait, renderOptionList } from './chat-ui.js?v=4';
+import { createChatUI, wait, renderOptionList } from './chat-ui.js?v=10';
 import { startVaBenefitsFlow, isVaBenefitsFlowActive } from './va-benefits-flow.js';
 import { startDisabilityClaimFlow, isDisabilityClaimFlowActive } from './disability-claim-flow.js';
 

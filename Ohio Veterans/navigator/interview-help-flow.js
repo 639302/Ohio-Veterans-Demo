@@ -1,6 +1,6 @@
 // Ohio Veterans — Navigator
-// Flow data for the Interview Help tab's embedded chat widget (see
-// flow-chat.js). "Yes" asks for job details in free text, then routes to a
+// Flow data for the Interview Help page's chat widget (see flow-chat.js).
+// "Yes" asks for job details in free text, then routes to a
 // canned set of tailored interview questions + tips based on a keyword match
 // against questions.js's existing INDUSTRY_BUCKETS (reused, not duplicated,
 // as the matching taxonomy) — a stand-in for a real AI-generated response,

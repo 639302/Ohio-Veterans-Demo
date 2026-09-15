@@ -1,16 +1,15 @@
 // Ohio Veterans — Navigator
-// Landing screen behavior: free-text submit and the static topic tab strip
-// (Benefits, GI Bill, Mental Health, Housing, Family — the 5 topics that
-// aren't personalized by intake answers). Before a scenario has been chosen
-// (fresh visit, no account-menu pick yet), the search box + CTA is swapped
-// for a scenario dropdown so a first-time visitor picks a persona up front;
-// once a scenario is set the normal free-text search box takes over again.
+// Landing screen behavior: free-text submit, personalized prompt shortcuts,
+// the bottom-sheet chat drawer experience, and the static topic tab strip.
 
-import { matchCategoryFromText } from './questions.js';
-import { getState, resetState, setIntent, setScenario, setLandingText } from './state.js';
-import { buildBenefitsCard, buildGiBillCard, buildMentalHealthCard, buildHousingCard, buildFamilyCard, buildVeteranSupportCard, buildEmploymentTopicCard } from './static-content.js';
-import { RENDERERS } from './card-renderers.js?v=2';
-import { SCENARIOS } from './scenarios.js';
+import './session-reset.js?v=1';
+import { matchCategoryFromText } from './questions.js?v=6';
+import { getState, resetState, setIntent, setScenario, setLandingText } from './state.js?v=6';
+import { buildBenefitsCard, buildGiBillCard, buildMentalHealthCard, buildHousingCard, buildFamilyCard, buildVeteranSupportCard, buildEmploymentTopicCard } from './static-content.js?v=6';
+import { RENDERERS } from './card-renderers.js?v=11';
+import { initChatDrawer, openChatDrawer, matchIntentKeywords } from './chat-drawer.js?v=19';
+
+initChatDrawer();
 
 const tablistEl = document.getElementById('landing-tablist');
 const tabpanelsEl = document.getElementById('landing-tabpanels');
@@ -57,62 +56,42 @@ function renderLandingTabs() {
 renderLandingTabs();
 
 const textForm = document.getElementById('landing-form');
-const scenarioForm = document.getElementById('landing-scenario-form');
 
 function renderStartForm() {
-  const hasScenario = Boolean(getState().answers.scenario);
+  textForm.hidden = false;
 
-  if (hasScenario) {
-    scenarioForm.hidden = true;
-    textForm.hidden = false;
+  const textInput = document.getElementById('landing-text-input');
+  const submitButton = document.getElementById('landing-submit');
 
-    const textInput = document.getElementById('landing-text-input');
-    const submitButton = document.getElementById('landing-submit');
-
-    const { landingText } = getState();
-    if (landingText) {
-      textInput.addEventListener('focus', () => {
-        textInput.value = landingText;
-      }, { once: true });
-    }
-
-    function submitFreeText() {
-      const text = textInput.value || '';
-      const guess = matchCategoryFromText(text);
-      const scenario = getState().answers.scenario;
-      resetState();
-      if (scenario) setScenario(scenario);
-      setLandingText(text);
-      setIntent(guess);
-      window.location.href = 'intake.html';
-    }
-
-    submitButton.addEventListener('click', submitFreeText);
-    textInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') submitFreeText();
-    });
-    return;
+  function submitFreeText() {
+    const text = textInput.value || '';
+    const match = matchIntentKeywords(text);
+    openChatDrawer({ query: text, scenario: match });
   }
 
-  textForm.hidden = true;
-  scenarioForm.hidden = false;
-
-  const scenarioSelect = document.getElementById('landing-scenario-select');
-  const scenarioSubmit = document.getElementById('landing-scenario-submit');
-  scenarioSelect.options = SCENARIOS.map((scenario) => ({ value: scenario.value, label: scenario.label }));
-
-  function submitScenario() {
-    const value = scenarioSelect.value;
-    const scenario = SCENARIOS.find((item) => item.value === value);
-    if (!scenario) return;
-    resetState();
-    setIntent(scenario.goal);
-    setScenario(scenario.value);
-    if (scenario.promptText) setLandingText(scenario.promptText);
-    window.location.reload();
-  }
-
-  scenarioSubmit.addEventListener('click', submitScenario);
+  submitButton.addEventListener('click', submitFreeText);
+  textInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') submitFreeText();
+  });
 }
 
 renderStartForm();
+
+document.querySelectorAll('.landing-prompt-card').forEach((card) => {
+  customElements.whenDefined('mms-card').then(() => {
+    card.showBody = false;
+  });
+
+  function startPrompt() {
+    const scenarioValue = card.dataset.promptScenario;
+    const promptText = card.dataset.promptText || card.getAttribute('title-text') || card.textContent.trim();
+    openChatDrawer({ scenario: scenarioValue, promptText });
+  }
+
+  card.addEventListener('click', startPrompt);
+  card.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    startPrompt();
+  });
+});

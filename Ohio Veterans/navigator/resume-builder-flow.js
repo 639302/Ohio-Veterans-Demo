@@ -1,6 +1,6 @@
 // Ohio Veterans — Navigator
-// Flow data for the Resume Builder tab's embedded chat widget (see
-// flow-chat.js), transcribed from the user's "Resume builder logic flow"
+// Flow data for the Resume Builder page's chat widget (see flow-chat.js),
+// transcribed from the user's "Resume builder logic flow"
 // diagram. A few adaptations were made without changing the engine's
 // question set/order:
 // - "Upload your resume" uses flow-chat.js's `type: 'file'` node — a real

@@ -122,28 +122,21 @@ function buildEmployersCard(answers) {
   return { key: 'employers', title: 'Military-Friendly Employers Near You', employers };
 }
 
-// Job-seeker scenario only: Employment, Resume Builder, and Interview Help
-// are always available. Employment maps to the existing results content, now
-// split into one card per section; the other tabs mount their dedicated
-// conversational tools in result.js.
+// Job-seeker results focus on employment matches. Resume Builder and
+// Interview Help live under the Jobs & Education resource section.
 const JOB_FOCUS_TABS = [
   { value: 'find-jobs', key: 'employment', label: 'Employment' },
-  { value: 'resume-builder', key: 'resume-builder', label: 'Resume Builder' },
-  { value: 'interview-help', key: 'interview-help', label: 'Interview Help' },
 ];
 
 function buildJobFocusTabs(answers) {
   return JOB_FOCUS_TABS.map((tab) => {
-    if (tab.value === 'find-jobs') {
-      const cards = [
-        buildMosTranslationCard(answers),
-        buildSkillbridgeCard(answers),
-        buildJobListingsCard(answers),
-        buildEmployersCard(answers),
-      ].filter(Boolean);
-      return { key: tab.key, label: tab.label, cards };
-    }
-    return { key: tab.key, label: tab.label, cards: [] };
+    const cards = [
+      buildMosTranslationCard(answers),
+      buildSkillbridgeCard(answers),
+      buildJobListingsCard(answers),
+      buildEmployersCard(answers),
+    ].filter(Boolean);
+    return { key: tab.key, label: tab.label, cards };
   });
 }
 
@@ -195,10 +188,10 @@ function buildReferenceNumber(answers) {
 //                   SkillBridge, job listings, employers all stacked in one
 //                   card), built for every scenario except job-seeker, which
 //                   uses jobFocusTabs instead.
-//   jobFocusTabs  - job-seeker scenario only: Employment, Resume Builder,
-//                   and Interview Help tabs, each with its own content (see
-//                   buildJobFocusTabs above). Empty array for every other
-//                   scenario. Benefits, GI Bill, Mental Health, Housing, and
+//   jobFocusTabs  - job-seeker scenario only: employment result sections.
+//                   Resume Builder and Interview Help live on dedicated
+//                   pages under Jobs & Education. Empty array for every
+//                   other scenario. Benefits, GI Bill, Mental Health, Housing, and
 //                   Family moved to static-content.js and are shown
 //                   unconditionally on the homepage instead.
 const APPLICATION_STATUS_CONTENT = {

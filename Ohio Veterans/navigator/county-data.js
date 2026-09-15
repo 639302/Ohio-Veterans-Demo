@@ -780,6 +780,63 @@ export function matchCountyOrZipFromText(text) {
   return matchCountyFromText(text) || matchCountyFromZip(text);
 }
 
+// VA Caregiver Support Program regional pages, approximated by Ohio VA
+// medical center catchment area per county — used by chat-drawer.js's
+// "Caregiver Support" keyword response to point veterans/family members to
+// their nearest regional page after they share a county or ZIP code.
+export const CAREGIVER_SUPPORT_LOCATIONS = {
+  'central-ohio': {
+    label: 'Central Ohio Caregiver Support',
+    url: 'https://www.va.gov/central-ohio-health-care/health-services/caregiver-support/',
+  },
+  chillicothe: {
+    label: 'Chillicothe Caregiver Support',
+    url: 'https://www.va.gov/chillicothe-health-care/health-services/caregiver-support/',
+  },
+  cincinnati: {
+    label: 'Cincinnati Caregiver Support',
+    url: 'https://www.va.gov/cincinnati-health-care/health-services/caregiver-support/',
+  },
+  dayton: {
+    label: 'Dayton Caregiver Support',
+    url: 'https://www.va.gov/dayton-health-care/health-services/caregiver-support/',
+  },
+  'northeast-ohio': {
+    label: 'NorthEast Ohio Caregiver Support',
+    url: 'https://www.va.gov/northeast-ohio-health-care/health-services/caregiver-support/',
+  },
+};
+
+const CAREGIVER_SUPPORT_BY_COUNTY = {
+  Adams: 'cincinnati', Allen: 'dayton', Ashland: 'northeast-ohio', Ashtabula: 'northeast-ohio',
+  Athens: 'chillicothe', Auglaize: 'dayton', Belmont: 'northeast-ohio', Brown: 'cincinnati',
+  Butler: 'cincinnati', Carroll: 'northeast-ohio', Champaign: 'dayton', Clark: 'dayton',
+  Clermont: 'cincinnati', Clinton: 'cincinnati', Columbiana: 'northeast-ohio', Coshocton: 'northeast-ohio',
+  Crawford: 'northeast-ohio', Cuyahoga: 'northeast-ohio', Darke: 'dayton', Defiance: 'dayton',
+  Delaware: 'central-ohio', Erie: 'northeast-ohio', Fairfield: 'central-ohio', Fayette: 'central-ohio',
+  Franklin: 'central-ohio', Fulton: 'dayton', Gallia: 'chillicothe', Geauga: 'northeast-ohio',
+  Greene: 'dayton', Guernsey: 'northeast-ohio', Hamilton: 'cincinnati', Hancock: 'dayton',
+  Hardin: 'dayton', Harrison: 'northeast-ohio', Henry: 'dayton', Highland: 'chillicothe',
+  Hocking: 'chillicothe', Holmes: 'northeast-ohio', Huron: 'northeast-ohio', Jackson: 'chillicothe',
+  Jefferson: 'northeast-ohio', Knox: 'central-ohio', Lake: 'northeast-ohio', Lawrence: 'chillicothe',
+  Licking: 'central-ohio', Logan: 'dayton', Lorain: 'northeast-ohio', Lucas: 'northeast-ohio',
+  Madison: 'central-ohio', Mahoning: 'northeast-ohio', Marion: 'central-ohio', Medina: 'northeast-ohio',
+  Meigs: 'chillicothe', Mercer: 'dayton', Miami: 'dayton', Monroe: 'central-ohio',
+  Montgomery: 'dayton', Morgan: 'central-ohio', Morrow: 'central-ohio', Muskingum: 'central-ohio',
+  Noble: 'central-ohio', Ottawa: 'northeast-ohio', Paulding: 'dayton', Perry: 'central-ohio',
+  Pickaway: 'central-ohio', Pike: 'chillicothe', Portage: 'northeast-ohio', Preble: 'dayton',
+  Putnam: 'dayton', Richland: 'northeast-ohio', Ross: 'chillicothe', Sandusky: 'northeast-ohio',
+  Scioto: 'chillicothe', Seneca: 'northeast-ohio', Shelby: 'dayton', Stark: 'northeast-ohio',
+  Summit: 'northeast-ohio', Trumbull: 'northeast-ohio', Tuscarawas: 'northeast-ohio', Union: 'central-ohio',
+  'Van Wert': 'dayton', Vinton: 'chillicothe', Warren: 'cincinnati', Washington: 'chillicothe',
+  Wayne: 'northeast-ohio', Williams: 'dayton', Wood: 'northeast-ohio', Wyandot: 'dayton',
+};
+
+export function getCaregiverSupportLocation(county) {
+  const key = county && CAREGIVER_SUPPORT_BY_COUNTY[county];
+  return (key && CAREGIVER_SUPPORT_LOCATIONS[key]) || null;
+}
+
 const ODVS_STATEWIDE_PHONE = '(614) 644-0898';
 
 export function getCvsoInfo(county) {
