@@ -471,7 +471,7 @@ const breadcrumbsEl = document.getElementById('page-breadcrumbs');
 if (breadcrumbsEl) {
   customElements.whenDefined('mms-breadcrumbs').then(() => {
     breadcrumbsEl.items = [
-      { label: 'Home', href: '/Ohio%20Veterans/navigator/' },
+      { label: 'Home', href: './' },
       { label: resultsHeading?.textContent || 'Your Employment results' },
     ];
   });

@@ -246,7 +246,7 @@ document.getElementById('resource-page-root').innerHTML = `
       <div class="gov-banner__item"><mms-icon name="shield-check" size="lg"></mms-icon><div><strong>Trusted applications are secured by OHID</strong><p>When you log in with OHID, your privacy, data, and personal information are protected by federal and state digital security standards.</p></div></div>
     </div>
   </div>
-  <mms-header class="site-header" container="full" logo-size="xl" accent-line="brand" accent-line-color="primary" shrink-on-scroll scroll-threshold="24" home-href="/Ohio%20Veterans/navigator/" home-label="Ohio Department of Veterans Services">
+  <mms-header class="site-header" container="full" logo-size="xl" accent-line="brand" accent-line-color="primary" shrink-on-scroll scroll-threshold="24" home-href="./" home-label="Ohio Department of Veterans Services">
     <img slot="logo" src="assets/odvs-logo-horiz.png" alt="Ohio Department of Veterans Services" class="nav-header__logo">
     <img slot="logo-compact" src="assets/odvs-logo-horiz.png" alt="Ohio Department of Veterans Services" class="nav-header__logo nav-header__logo--compact">
     <div slot="nav" class="nav-header__dropdown">
